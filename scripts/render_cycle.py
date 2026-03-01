@@ -20,8 +20,9 @@ def main() -> None:
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=720)
     parser.add_argument("--dpi", type=int, default=100)
-    parser.add_argument("--frames", type=int, default=120)
+    parser.add_argument("--frames", type=int, default=None)
     parser.add_argument("--fps", type=int, default=30)
+    parser.add_argument("--duration", type=float, default=4.0, help="Output duration in seconds (target 3-5s)")
     parser.add_argument("--cycle-time", type=float, default=6.283185307179586)
     parser.add_argument("--format", default="gif", choices=["gif", "mp4"])
     parser.add_argument("--output", default="output/cycle.gif")
@@ -32,8 +33,10 @@ def main() -> None:
     particle = build_scene(args.particle, spin_state=args.spin_state)
 
     render_cfg = RenderConfig(width=args.width, height=args.height, dpi=args.dpi)
+    frames = args.frames if args.frames is not None else max(2, int(round(args.duration * args.fps)))
+
     anim_cfg = AnimationConfig(
-        frames=args.frames,
+        frames=frames,
         cycle_time=args.cycle_time,
         fps=args.fps,
         format=args.format,
