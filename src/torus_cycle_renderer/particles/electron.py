@@ -37,8 +37,9 @@ SPIN_PHASE_SHIFT = {
     SpinState.MM: math.pi,
 }
 
-# Loop chirality convention (render-level): spin-up vs spin-down reverse loop handedness.
-SPIN_CHIRALITY = {
+# Spin convention: spin flip reverses bosic transport handedness (p-sector),
+# while fermic orientation (p_f-sector) remains fixed for matter branch.
+SPIN_BOSIC_CHIRALITY = {
     SpinState.PP: +1,
     SpinState.PM: +1,
     SpinState.MP: -1,
@@ -133,9 +134,8 @@ class Electron(FermionParticle, AbstractParticle):
         omega = self._effective_omega()
         t_eff = t * self._time_scale()
         phase0 = SPIN_PHASE_SHIFT[self.spin_state]
-        chirality = SPIN_CHIRALITY[self.spin_state]
         mode_p, mode_pf = self.state.resonant_mode
-        phase = mode_p * u + mode_pf * v - chirality * omega * t_eff + phase0
+        phase = mode_p * u + mode_pf * v - omega * t_eff + phase0
         return p.deform_amp * np.cos(phase)
 
     def resonant_loop(self, t: float, points: int = 900) -> tuple[np.ndarray, np.ndarray]:
@@ -157,7 +157,7 @@ class Electron(FermionParticle, AbstractParticle):
         # _transport_winding returns (k_pf, k_p); swap into coordinate axes:
         # u/theta uses p winding, v/phi uses p_f winding.
         k_pf, k_p = self._transport_winding()
-        chirality = SPIN_CHIRALITY[self.spin_state]
+        bosic_chirality = SPIN_BOSIC_CHIRALITY[self.spin_state]
         s = np.linspace(0.0, 1.0, points, endpoint=True)
 
         u0 = 0.0
@@ -165,12 +165,12 @@ class Electron(FermionParticle, AbstractParticle):
             if self.state.loop_anchor_mode == "static":
                 v0 = (-phase0 - mode_p * u0) / mode_pf
             else:
-                v0 = (chirality * omega * t_eff - phase0 - mode_p * u0) / mode_pf
+                v0 = (omega * t_eff - phase0 - mode_p * u0) / mode_pf
         else:
             v0 = 0.0
 
-        u = u0 + 2.0 * np.pi * k_p * s
-        v = v0 + 2.0 * np.pi * chirality * k_pf * s
+        u = u0 + 2.0 * np.pi * bosic_chirality * k_p * s
+        v = v0 + 2.0 * np.pi * k_pf * s
         return u, v
 
     def cycle_time(self) -> float:
