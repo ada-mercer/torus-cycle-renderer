@@ -25,6 +25,8 @@ class Electron(FermionParticle, SolverBackedParticle):
             loop_turn_u=3,
             loop_turn_v=5,
             phase_speed=1.4,
+            pf_value=1.0,
+            p_value=0.33,
             visual_time_scale=0.35,
             color="#3a86ff",
             loop_color="#ff006e",

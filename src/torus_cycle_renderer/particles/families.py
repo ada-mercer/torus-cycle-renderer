@@ -7,7 +7,7 @@ from enum import Enum
 import numpy as np
 
 from .base import AbstractParticle, ParticleParams
-from torus_cycle_renderer.math.steady_state import solve_steady_state, wrapped_phase_distance
+from torus_cycle_renderer.math.steady_state import solve_steady_state
 
 
 class PolicyViolation(ValueError):
@@ -173,7 +173,9 @@ class SolverBackedParticle(ParticleFamily):
         steady = self._steady
         assert steady is not None
 
-        t_eff = t * p.visual_time_scale
+        # Slow visual evolution by channel ratio to avoid unreadable over-rotation.
+        ratio_scale = max(p.p_value, 1e-6) / max(p.pf_value, 1e-6)
+        t_eff = t * p.visual_time_scale * ratio_scale
         sampled = self._sample_mode(u, v)
         field_t = np.real(sampled * np.exp(-1j * steady.omega * t_eff))
         norm = np.max(np.abs(field_t)) + 1e-12
@@ -181,33 +183,16 @@ class SolverBackedParticle(ParticleFamily):
 
     def resonant_loop(self, t: float, points: int = 900) -> tuple[np.ndarray, np.ndarray]:
         self._ensure_solution()
-        steady = self._steady
-        assert steady is not None
-
         p = self.params
-        t_eff = t * p.visual_time_scale
-        phase = np.angle(steady.mode * np.exp(-1j * steady.omega * t_eff))
-        target = SPIN_PHASE_TARGET[self.spin_state]
+
+        # Use a smooth torus-knot branch parameterized by pf/p ratio to avoid
+        # noisy phase-jump artifacts from raw per-column phase minimization.
+        ratio = max(p.pf_value, 1e-6) / max(p.p_value, 1e-6)
+        q = int(np.clip(round(ratio), 1, 8))
 
         u = np.linspace(0.0, 2 * np.pi, points, endpoint=False)
-        iu = np.mod((u / (2 * np.pi) * len(steady.u_axis)).astype(int), len(steady.u_axis))
+        target = SPIN_PHASE_TARGET[self.spin_state]
 
-        nv = len(steady.v_axis)
-        penalty_weight = 0.20  # continuity regularizer to avoid jagged loop jumps
-        v = np.empty_like(u)
-        prev_iv: int | None = None
-
-        idx = np.arange(nv)
-        for j, iu_j in enumerate(iu):
-            col = phase[:, iu_j]
-            base_cost = wrapped_phase_distance(col, target)
-            if prev_iv is None:
-                iv = int(np.argmin(base_cost))
-            else:
-                cyclic_dist = np.minimum(np.abs(idx - prev_iv), nv - np.abs(idx - prev_iv)) / max(nv, 1)
-                cost = base_cost + penalty_weight * cyclic_dist
-                iv = int(np.argmin(cost))
-            v[j] = steady.v_axis[iv]
-            prev_iv = iv
-
+        drift = 0.25 * p.visual_time_scale * (max(p.p_value, 1e-6) / max(p.pf_value, 1e-6)) * t
+        v = (q * u + target + drift) % (2 * np.pi)
         return u, v

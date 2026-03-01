@@ -51,3 +51,10 @@ This is a clean baseline to iterate math without carrying legacy assumptions.
 ## Documentation
 - Theory intro: `docs/INTRODUCTION.md`
 - In-depth electron example: `docs/ELECTRON_STEADY_STATE_EXAMPLE.md`
+
+## Visual control note
+For solver-backed fermions, visual pacing/loop smoothness now uses explicit channel parameters:
+- `pf_value` (fermic scale)
+- `p_value` (bosic scale)
+
+The loop branch uses approximately `round(pf_value / p_value)` turns to avoid random phase-jump artifacts.

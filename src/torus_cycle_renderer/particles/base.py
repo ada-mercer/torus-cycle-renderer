@@ -17,6 +17,10 @@ class ParticleParams:
     loop_turn_u: int
     loop_turn_v: int
     phase_speed: float
+    # Internal channel controls (presentation-level until full calibration lock):
+    # pf_value ~ fermic channel scale, p_value ~ bosic channel scale.
+    pf_value: float = 1.0
+    p_value: float = 0.33
     visual_time_scale: float = 1.0
     resonance_coupling: float = 0.22
     resonance_detuning: float = 0.03
