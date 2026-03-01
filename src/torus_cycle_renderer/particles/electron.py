@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from fractions import Fraction
 import math
 import numpy as np
 
@@ -14,7 +15,9 @@ class ElectronState:
 
     spin_state: SpinState = SpinState.PP
     winding: tuple[int, int] = (1, 1)
-    resonant_mode: tuple[int, int] = (1, 3)  # (nu_f, nu_b) single closed mode
+    resonant_mode: tuple[int, int] = (1, 3)  # (nu_f, nu_b) single mode (no superposition)
+    # Optional explicit transport winding (k_f, k_b). If None, inferred from pf/p ratio.
+    transport_winding: tuple[int, int] | None = None
     pf_value: float = 1.0
     p_value: float = 1.0 / 3.0
     phase_speed: float = 1.2
@@ -41,6 +44,7 @@ class Electron(FermionParticle, AbstractParticle):
             spin_state=SpinState(spin_state),
             winding=base.winding,
             resonant_mode=base.resonant_mode,
+            transport_winding=base.transport_winding,
             pf_value=base.pf_value,
             p_value=base.p_value,
             phase_speed=base.phase_speed,
@@ -87,43 +91,60 @@ class Electron(FermionParticle, AbstractParticle):
         omega_sq = 1.0 + (nu_f**2) / (p.major_radius**2) + (nu_b**2) / (p.minor_radius**2)
         return math.sqrt(max(omega_sq, 1e-12))
 
+    def _time_scale(self) -> float:
+        p = self.params
+        return p.visual_time_scale * (max(p.p_value, 1e-9) / max(p.pf_value, 1e-9))
+
+    def _transport_winding(self) -> tuple[int, int]:
+        """Closed-loop winding (k_f, k_b) approximating m ∝ p_f e_f + p e_b."""
+        if self.state.transport_winding is not None:
+            return self.state.transport_winding
+
+        ratio = max(self.state.pf_value, 1e-9) / max(self.state.p_value, 1e-9)
+        frac = Fraction(ratio).limit_denominator(8)
+        k_f = max(1, int(frac.numerator))
+        k_b = max(1, int(frac.denominator))
+        return (k_f, k_b)
+
     def deformation(self, u: np.ndarray, v: np.ndarray, t: float) -> np.ndarray:
         p = self.params
         omega = self._effective_omega()
-        # Presentation pacing uses p/pf to keep the cycle readable.
-        t_eff = t * p.visual_time_scale * (max(p.p_value, 1e-6) / max(p.pf_value, 1e-6))
+        t_eff = t * self._time_scale()
         phase0 = SPIN_PHASE_SHIFT[self.spin_state]
         nu_f, nu_b = self.state.resonant_mode
         phase = nu_f * u + nu_b * v - omega * t_eff + phase0
         return p.deform_amp * np.cos(phase)
 
     def resonant_loop(self, t: float, points: int = 900) -> tuple[np.ndarray, np.ndarray]:
-        """Closed single-branch resonant cycle from one mode equation.
+        """Closed resonant transport loop in torus coordinates.
 
-        Constraint: nu_f*u + nu_b*v - omega*t + phase0 = const.
-        Use continuous branch values (no modulo) to avoid visual jump artifacts.
+        Construction:
+        - Tangent transport direction: m ~ p_f e_f + p e_b -> winding (k_f, k_b).
+        - Loop: u = u0 + 2π k_f s, v = v0 + 2π k_b s, s in [0,1].
+        - Start phase lock at (u0,v0): nu_f u0 + nu_b v0 - omega t_eff + phase0 = 0.
+
+        This guarantees geometric closure (same point at s=0 and s=1 modulo 2π).
         """
-        p = self.params
         nu_f, nu_b = self.state.resonant_mode
         omega = self._effective_omega()
-        t_eff = t * p.visual_time_scale * (max(p.p_value, 1e-6) / max(p.pf_value, 1e-6))
+        t_eff = t * self._time_scale()
         phase0 = SPIN_PHASE_SHIFT[self.spin_state]
 
-        u = np.linspace(0.0, 2 * np.pi, points, endpoint=True)
+        k_f, k_b = self._transport_winding()
+        s = np.linspace(0.0, 1.0, points, endpoint=True)
 
-        if nu_b == 0:
-            # Degenerate case: solve for constant u branch and sweep v.
-            u0 = (omega * t_eff - phase0) / max(nu_f, 1e-6)
-            u = np.full(points, u0)
-            v = np.linspace(0.0, 2 * np.pi, points, endpoint=True)
-            return u, v
+        u0 = 0.0
+        if nu_b != 0:
+            v0 = (omega * t_eff - phase0 - nu_f * u0) / nu_b
+        else:
+            v0 = 0.0
 
-        v = (omega * t_eff - phase0 - nu_f * u) / nu_b
+        u = u0 + 2.0 * np.pi * k_f * s
+        v = v0 + 2.0 * np.pi * k_b * s
         return u, v
 
     def cycle_time(self) -> float:
-        """Time for one complete phase advance of the single resonant mode."""
-        p = self.params
+        """Time for one complete resonant-cycle phase return at loop start."""
         omega = self._effective_omega()
-        scale = p.visual_time_scale * (max(p.p_value, 1e-6) / max(p.pf_value, 1e-6))
+        scale = self._time_scale()
         return (2.0 * math.pi) / max(omega * scale, 1e-9)

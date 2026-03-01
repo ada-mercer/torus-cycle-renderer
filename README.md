@@ -51,6 +51,7 @@ This is a clean baseline to iterate math without carrying legacy assumptions.
 ## Documentation
 - Theory intro: `docs/INTRODUCTION.md`
 - In-depth electron example: `docs/ELECTRON_STEADY_STATE_EXAMPLE.md`
+- Resonant loop derivation: `docs/RESONANT_LOOP_DERIVATION.md`
 
 ## Visual control note
 For solver-backed fermions, visual pacing/loop smoothness now uses explicit channel parameters:
