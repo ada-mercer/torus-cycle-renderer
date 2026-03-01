@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import numpy as np
 import plotly.graph_objects as go
+from matplotlib.colors import to_rgb
 
 from torus_cycle_renderer.math import torus_surface, torus_frame
 from torus_cycle_renderer.particles import AbstractParticle
@@ -19,8 +20,8 @@ class PlotlyRenderConfig:
     mesh_opacity: float = 0.50
     gridline_stride_u: int = 10
     gridline_stride_v: int = 8
-    gridline_width: float = 2.0
-    gridline_color: str = "rgba(255,255,255,0.22)"
+    gridline_width: float = 1.4
+    gridline_alpha: float = 0.12
 
 
 class PlotlyTorusRenderer:
@@ -46,6 +47,15 @@ class PlotlyTorusRenderer:
                 kk.extend([c, d])
 
         return np.asarray(ii), np.asarray(jj), np.asarray(kk)
+
+    def _gridline_highlight_rgba(self, base_color: str, alpha: float) -> str:
+        r, g, b = to_rgb(base_color)
+        # blend toward white for a subtle highlight tone
+        blend = 0.62
+        rr = (1.0 - blend) * r + blend * 1.0
+        gg = (1.0 - blend) * g + blend * 1.0
+        bb = (1.0 - blend) * b + blend * 1.0
+        return f"rgba({int(rr*255)}, {int(gg*255)}, {int(bb*255)}, {alpha:.3f})"
 
     def render(self, particle: AbstractParticle, time: float, output_path: str, export_geometry: bool = False) -> None:
         p = particle.params
@@ -87,6 +97,7 @@ class PlotlyTorusRenderer:
         )
 
         grid_traces: list[go.Scatter3d] = []
+        gridline_color = self._gridline_highlight_rgba(p.color, cfg.gridline_alpha)
 
         # u-lines (vary v index, sweep u)
         for iv in range(0, nv, max(cfg.gridline_stride_v, 1)):
@@ -96,7 +107,7 @@ class PlotlyTorusRenderer:
                     y=y[iv, :],
                     z=z[iv, :],
                     mode="lines",
-                    line=dict(color=cfg.gridline_color, width=cfg.gridline_width),
+                    line=dict(color=gridline_color, width=cfg.gridline_width),
                     hoverinfo="skip",
                     showlegend=False,
                 )
@@ -110,7 +121,7 @@ class PlotlyTorusRenderer:
                     y=y[:, iu],
                     z=z[:, iu],
                     mode="lines",
-                    line=dict(color=cfg.gridline_color, width=cfg.gridline_width),
+                    line=dict(color=gridline_color, width=cfg.gridline_width),
                     hoverinfo="skip",
                     showlegend=False,
                 )
