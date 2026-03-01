@@ -29,6 +29,22 @@ python scripts/render_frame.py \
   --output output/electron_frame.png
 ```
 
+Depth-accurate alternative backend (Plotly):
+```bash
+python scripts/render_frame.py \
+  --backend plotly \
+  --particle electron \
+  --spin-state ++ \
+  --time 0.0 \
+  --output output/electron_frame.html
+```
+
+Geometry export (for external renderers):
+```bash
+python scripts/render_frame.py --particle electron --export-geometry --output output/electron_frame.png
+# writes: *_geom.npz, *_torus.obj, *_loop.obj
+```
+
 Render full cycle GIF:
 ```bash
 python scripts/render_cycle.py \
@@ -57,6 +73,7 @@ This is a clean baseline to iterate math without carrying legacy assumptions.
 - Theory intro: `docs/INTRODUCTION.md`
 - In-depth electron example: `docs/ELECTRON_STEADY_STATE_EXAMPLE.md`
 - Resonant loop derivation: `docs/RESONANT_LOOP_DERIVATION.md`
+- Rendering backends: `docs/RENDERING_BACKENDS.md`
 
 ## Visual control note
 For solver-backed fermions, visual pacing/loop smoothness now uses explicit channel parameters:

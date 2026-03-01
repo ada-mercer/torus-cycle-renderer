@@ -29,9 +29,7 @@ class RenderConfig:
 
     # Loop
     loop_linewidth: float = 2.6
-    loop_lift: float = 0.04
-    loop_back_alpha: float = 0.18
-    loop_front_alpha: float = 0.98
+    loop_lift: float = 0.05
 
     # Lighting / shadow
     light_azdeg: float = 35.0
@@ -86,33 +84,6 @@ class TorusRenderer:
         coll = Line3DCollection(segs, colors=color, linewidths=lw, alpha=0.98)
         return coll
 
-    def _split_loop_by_camera_hemisphere(
-        self,
-        lx: np.ndarray,
-        ly: np.ndarray,
-        lz: np.ndarray,
-        center: np.ndarray,
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Approximate front/back segmentation against camera direction.
-
-        This is a robust practical fix for Matplotlib's painterly 3D ordering:
-        back hemisphere segments are drawn before the torus, front segments after.
-        """
-        cfg = self.config
-        az = np.deg2rad(cfg.azim)
-        el = np.deg2rad(cfg.elev)
-        view_dir = np.array([
-            np.cos(el) * np.cos(az),
-            np.cos(el) * np.sin(az),
-            np.sin(el),
-        ])
-
-        pts = np.column_stack([lx, ly, lz])
-        mids = 0.5 * (pts[:-1] + pts[1:])
-        rel = mids - center[None, :]
-        front_mask = (rel @ view_dir) >= 0.0
-        return front_mask, ~front_mask
-
     def render(self, particle: AbstractParticle, time: float, output_path: str) -> None:
         p = particle.params
         cfg = self.config
@@ -143,31 +114,6 @@ class TorusRenderer:
             shade=False,
         )
 
-        lu, lv = particle.resonant_loop(time)
-        ldef = particle.deformation(lu, lv, time)
-        lx, ly, lz = torus_surface(
-            lu,
-            lv,
-            p.major_radius,
-            p.minor_radius,
-            deformation=ldef + cfg.loop_lift,
-        )
-
-        center = np.array([np.mean(x), np.mean(y), np.mean(z)])
-        front_mask, back_mask = self._split_loop_by_camera_hemisphere(lx, ly, lz, center)
-
-        # Draw back loop segments first (so torus naturally occludes them).
-        pts = np.column_stack([lx, ly, lz])
-        segs = np.stack([pts[:-1], pts[1:]], axis=1)
-        if np.any(back_mask):
-            back_coll = Line3DCollection(
-                segs[back_mask],
-                colors=p.loop_color,
-                linewidths=cfg.loop_linewidth * 0.95,
-                alpha=cfg.loop_back_alpha,
-            )
-            ax.add_collection3d(back_coll)
-
         facecolors = self._surface_facecolors(x, y, z, p.color)
         ax.plot_surface(
             x,
@@ -193,23 +139,25 @@ class TorusRenderer:
             linewidth=cfg.wireframe_linewidth,
         )
 
-        # Draw front loop segments after torus.
-        if np.any(front_mask):
-            front_glow = Line3DCollection(
-                segs[front_mask],
-                colors=p.loop_color,
-                linewidths=cfg.loop_linewidth * 1.8,
-                alpha=0.20,
-            )
-            ax.add_collection3d(front_glow)
+        lu, lv = particle.resonant_loop(time)
+        ldef = particle.deformation(lu, lv, time)
+        lx, ly, lz = torus_surface(
+            lu,
+            lv,
+            p.major_radius,
+            p.minor_radius,
+            deformation=ldef + cfg.loop_lift,
+        )
 
-            front_coll = Line3DCollection(
-                segs[front_mask],
-                colors=p.loop_color,
-                linewidths=cfg.loop_linewidth,
-                alpha=cfg.loop_front_alpha,
-            )
-            ax.add_collection3d(front_coll)
+        # Segment collections give better depth sorting than one monolithic line artist.
+        # Add a soft under-stroke + core stroke for readability over mesh.
+        loop_glow = self._line_collection(lx, ly, lz, p.loop_color, cfg.loop_linewidth * 1.8)
+        loop_glow.set_alpha(0.25)
+        ax.add_collection3d(loop_glow)
+
+        loop_collection = self._line_collection(lx, ly, lz, p.loop_color, cfg.loop_linewidth)
+        loop_collection.set_alpha(0.98)
+        ax.add_collection3d(loop_collection)
 
         extent = p.major_radius + p.minor_radius + p.deform_amp + 0.2
         ax.set_xlim(-extent, extent)
