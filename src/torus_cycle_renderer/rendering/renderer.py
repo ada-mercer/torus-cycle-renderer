@@ -20,7 +20,7 @@ class RenderConfig:
     azim: float = 36.0
 
     # Surface / wireframe
-    face_alpha: float = 0.44
+    face_alpha: float = 0.45
     surface_edge_linewidth: float = 0.10
     surface_edge_alpha: float = 0.30
     wireframe_linewidth: float = 0.36

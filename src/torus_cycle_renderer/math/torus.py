@@ -18,8 +18,8 @@ def torus_surface(
 
 
 def torus_frame(
-    u_res: int = 220,
-    v_res: int = 120,
+    u_res: int = 320,
+    v_res: int = 180,
 ) -> tuple[np.ndarray, np.ndarray]:
     u = np.linspace(0.0, 2 * np.pi, u_res)
     v = np.linspace(0.0, 2 * np.pi, v_res)
