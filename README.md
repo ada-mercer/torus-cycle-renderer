@@ -34,6 +34,10 @@ The default scene renders:
 1. a deformed torus surface,
 2. a resonant loop tied to particle phase dynamics.
 
-The resonant loop is now generated via a small **SciPy ODE integration** (`scipy.integrate.solve_ivp`) for coupled phase dynamics.
+The resonant loop is now generated from solver-backed phase structure for the electron path, with SciPy used for numerical components.
 
 This is a clean baseline to iterate math without carrying legacy assumptions.
+
+## Documentation
+- Theory intro: `docs/INTRODUCTION.md`
+- In-depth electron example: `docs/ELECTRON_STEADY_STATE_EXAMPLE.md`
