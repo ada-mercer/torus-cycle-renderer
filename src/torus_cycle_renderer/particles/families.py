@@ -10,6 +10,10 @@ from .base import AbstractParticle, ParticleParams
 from torus_cycle_renderer.math.steady_state import solve_steady_state, wrapped_phase_distance
 
 
+class PolicyViolation(ValueError):
+    """Raised when particle-family policy constraints are violated."""
+
+
 class SpinState(str, Enum):
     PP = "++"
     PM = "+-"
@@ -35,17 +39,51 @@ class SolverConfig:
 class ParticleFamily(AbstractParticle):
     family: str = "particle"
 
+    def validate_policy(self, stage: str = "pre") -> None:
+        p = self.params
+        if p.major_radius <= 0 or p.minor_radius <= 0:
+            raise PolicyViolation(f"{self.family}: radii must be > 0")
+        if p.deform_amp < 0:
+            raise PolicyViolation(f"{self.family}: deform_amp must be >= 0")
+
 
 class FermionParticle(ParticleFamily):
     family = "fermion"
+    # Conservative default: require nontrivial fermic content, but avoid over-constraining
+    # before full calibration locks are implemented.
+    pf_ratio_min: float = 0.01
+
+    def validate_policy(self, stage: str = "pre") -> None:
+        super().validate_policy(stage=stage)
+
+        spin_state = getattr(self, "spin_state", None)
+        if spin_state is None:
+            raise PolicyViolation("fermion: spin_state must be set")
+
+        winding = getattr(self, "winding", None)
+        if winding is None:
+            raise PolicyViolation("fermion: winding sector (n_f, n_b) must be defined")
+
+        n_f, n_b = winding
+        if not (isinstance(n_f, int) and isinstance(n_b, int)):
+            raise PolicyViolation("fermion: winding values must be integers")
 
 
 class BosonParticle(ParticleFamily):
     family = "boson"
 
+    def validate_policy(self, stage: str = "pre") -> None:
+        super().validate_policy(stage=stage)
+
 
 class WeakBosonParticle(BosonParticle):
     family = "weak-boson"
+
+    def validate_policy(self, stage: str = "pre") -> None:
+        super().validate_policy(stage=stage)
+        coupling = self.params.resonance_coupling
+        if not (0.0 <= coupling <= 1.0):
+            raise PolicyViolation("weak-boson: resonance_coupling must be in [0, 1]")
 
 
 class SolverBackedParticle(ParticleFamily):
@@ -63,9 +101,44 @@ class SolverBackedParticle(ParticleFamily):
     def mode_index(self) -> int:
         return self.solver.mode_index
 
+    def _channel_intensities(self, mode: np.ndarray) -> tuple[float, float]:
+        p = self.params
+        n_f, n_b = self.winding
+
+        du = 2 * np.pi / mode.shape[1]
+        dv = 2 * np.pi / mode.shape[0]
+
+        d_u = (np.roll(mode, -1, axis=1) - np.roll(mode, 1, axis=1)) / (2.0 * du)
+        d_v = (np.roll(mode, -1, axis=0) - np.roll(mode, 1, axis=0)) / (2.0 * dv)
+
+        D_f_mode = d_u + 1j * n_f * mode
+        D_b_mode = d_v + 1j * n_b * mode
+
+        i_f = float(np.mean((np.abs(D_f_mode) ** 2) / (p.major_radius**2)))
+        i_b = float(np.mean((np.abs(D_b_mode) ** 2) / (p.minor_radius**2)))
+        return i_f, i_b
+
+    def _validate_solver_solution(self) -> None:
+        steady = self._steady
+        if steady is None:
+            raise PolicyViolation("solver-backed: steady solution missing")
+
+        i_f, i_b = self._channel_intensities(steady.mode)
+
+        if isinstance(self, FermionParticle):
+            total = i_f + i_b + 1e-12
+            pf_ratio = i_f / total
+            if pf_ratio < self.pf_ratio_min:
+                raise PolicyViolation(
+                    f"fermion: p_f dominance failed (ratio={pf_ratio:.3f} < {self.pf_ratio_min:.3f})"
+                )
+
     def _ensure_solution(self) -> None:
         if self._steady is not None:
             return
+
+        self.validate_policy(stage="pre-solve")
+
         p = self.params
         n_f, n_b = self.winding
         self._steady = solve_steady_state(
@@ -79,6 +152,9 @@ class SolverBackedParticle(ParticleFamily):
             nv=self.solver.nv,
             mode_index=self.mode_index,
         )
+
+        self._validate_solver_solution()
+        self.validate_policy(stage="post-solve")
 
     def _sample_mode(self, u: np.ndarray, v: np.ndarray) -> np.ndarray:
         self._ensure_solution()

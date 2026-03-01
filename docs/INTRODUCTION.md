@@ -73,6 +73,13 @@ This means the default electron path is now *solver-backed*.
   - `Electron` (solver-backed, spin-aware)
   - `Photon` (current baseline, can be upgraded similarly)
 
+### Policy enforcement
+Family classes enforce constraints before/after solve:
+- base particle policy: valid radii and deformation ranges,
+- fermion policy: valid spin/winding plus nontrivial fermic channel content,
+- weak-boson policy: bounded coupling regime.
+
+Policy violations raise `PolicyViolation` and block rendering of invalid states.
 ---
 
 ## Numerical strategy

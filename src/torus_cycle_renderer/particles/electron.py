@@ -4,7 +4,7 @@ from .base import ParticleParams
 from .families import FermionParticle, SolverBackedParticle
 
 
-class Electron(SolverBackedParticle, FermionParticle):
+class Electron(FermionParticle, SolverBackedParticle):
     @property
     def name(self) -> str:
         return f"electron[{self.spin_state.value}]"

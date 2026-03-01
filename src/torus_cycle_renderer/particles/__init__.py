@@ -6,6 +6,7 @@ from .families import (
     WeakBosonParticle,
     SolverBackedParticle,
     SpinState,
+    PolicyViolation,
 )
 from .electron import Electron
 from .photon import Photon
@@ -18,6 +19,7 @@ __all__ = [
     "WeakBosonParticle",
     "SolverBackedParticle",
     "SpinState",
+    "PolicyViolation",
     "Electron",
     "Photon",
 ]
