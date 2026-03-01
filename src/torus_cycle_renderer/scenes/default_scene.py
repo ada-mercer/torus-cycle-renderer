@@ -9,12 +9,12 @@ PARTICLES = {
 }
 
 
-def build_scene(name: str, spin_state: str = "++") -> AbstractParticle:
+def build_scene(name: str, spin_state: str = "++", loop_anchor_mode: str = "evolving") -> AbstractParticle:
     key = name.strip().lower()
     if key not in PARTICLES:
         raise ValueError(f"Unknown particle '{name}'. Available: {', '.join(PARTICLES)}")
 
     cls = PARTICLES[key]
     if key == "electron":
-        return cls(spin_state=spin_state)
+        return cls(spin_state=spin_state, loop_anchor_mode=loop_anchor_mode)
     return cls()

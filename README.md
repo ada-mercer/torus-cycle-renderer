@@ -34,10 +34,15 @@ Render full cycle GIF:
 python scripts/render_cycle.py \
   --particle electron \
   --spin-state ++ \
+  --loop-anchor-mode evolving \
   --frames 120 --fps 30 \
   --format gif \
   --output output/electron_cycle.gif
 ```
+
+Loop anchor modes:
+- `evolving`: start point follows phase lock over time
+- `static`: start point fixed (t=0 lock), loop still closes each frame
 
 ## First Demo
 The default scene renders:

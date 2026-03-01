@@ -100,7 +100,24 @@ for a single-mode state.
 
 ---
 
-## 6) Practical electron default
+## 6) Two anchor modes (both supported)
+Let \(v_0(t)\) denote the loop start anchor.
+
+1. **Evolving anchor mode** (`evolving`):
+\[
+v_0(t)=\frac{\omega t_{eff}-\phi_s-\nu_f u_0}{\nu_b}
+\]
+The start point follows instantaneous phase lock over time.
+
+2. **Static anchor mode** (`static`):
+\[
+v_0=\frac{-\phi_s-\nu_f u_0}{\nu_b}
+\]
+The start point is fixed in time (locked at \(t=0\)); loop geometry still closes and field evolves.
+
+Both modes keep geometric closure by the integer winding construction.
+
+## 7) Practical electron default
 For a readable electron presentation with \(p_f/p\approx 3\), choose
 \[
 (k_f,k_b)=(3,1)

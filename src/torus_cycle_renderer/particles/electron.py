@@ -18,6 +18,10 @@ class ElectronState:
     resonant_mode: tuple[int, int] = (1, 3)  # (nu_f, nu_b) single mode (no superposition)
     # Optional explicit transport winding (k_f, k_b). If None, inferred from pf/p ratio.
     transport_winding: tuple[int, int] | None = None
+    # Loop anchor mode:
+    # - "evolving": start point follows phase lock over time.
+    # - "static": start point fixed from t=0 lock, shape still rotates through field.
+    loop_anchor_mode: str = "evolving"
     pf_value: float = 1.0
     p_value: float = 1.0 / 3.0
     phase_speed: float = 1.2
@@ -38,13 +42,22 @@ SPIN_PHASE_SHIFT = {
 class Electron(FermionParticle, AbstractParticle):
     """Electron rendered from a single resonant mode state (no superpositions)."""
 
-    def __init__(self, spin_state: str = "++", state: ElectronState | None = None):
+    def __init__(
+        self,
+        spin_state: str = "++",
+        loop_anchor_mode: str = "evolving",
+        state: ElectronState | None = None,
+    ):
         base = state or ElectronState()
+        if loop_anchor_mode not in {"evolving", "static"}:
+            raise ValueError("loop_anchor_mode must be 'evolving' or 'static'")
+
         self.state = ElectronState(
             spin_state=SpinState(spin_state),
             winding=base.winding,
             resonant_mode=base.resonant_mode,
             transport_winding=base.transport_winding,
+            loop_anchor_mode=loop_anchor_mode,
             pf_value=base.pf_value,
             p_value=base.p_value,
             phase_speed=base.phase_speed,
@@ -59,7 +72,7 @@ class Electron(FermionParticle, AbstractParticle):
     @property
     def name(self) -> str:
         nu_f, nu_b = self.state.resonant_mode
-        return f"electron[{self.spin_state.value}] mode=({nu_f},{nu_b})"
+        return f"electron[{self.spin_state.value}] mode=({nu_f},{nu_b}) anchor={self.state.loop_anchor_mode}"
 
     @property
     def winding(self) -> tuple[int, int]:
@@ -135,7 +148,10 @@ class Electron(FermionParticle, AbstractParticle):
 
         u0 = 0.0
         if nu_b != 0:
-            v0 = (omega * t_eff - phase0 - nu_f * u0) / nu_b
+            if self.state.loop_anchor_mode == "static":
+                v0 = (-phase0 - nu_f * u0) / nu_b
+            else:
+                v0 = (omega * t_eff - phase0 - nu_f * u0) / nu_b
         else:
             v0 = 0.0
 

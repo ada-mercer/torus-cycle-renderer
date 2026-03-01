@@ -17,6 +17,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Render a full torus-cycle animation")
     parser.add_argument("--particle", default="electron", choices=["electron", "photon"])
     parser.add_argument("--spin-state", default="++", choices=["++", "+-", "-+", "--"])
+    parser.add_argument("--loop-anchor-mode", default="evolving", choices=["evolving", "static"])
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=720)
     parser.add_argument("--dpi", type=int, default=100)
@@ -35,7 +36,11 @@ def main() -> None:
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
 
-    particle = build_scene(args.particle, spin_state=args.spin_state)
+    particle = build_scene(
+        args.particle,
+        spin_state=args.spin_state,
+        loop_anchor_mode=args.loop_anchor_mode,
+    )
 
     render_cfg = RenderConfig(width=args.width, height=args.height, dpi=args.dpi)
     frames = args.frames if args.frames is not None else max(2, int(round(args.duration * args.fps)))
