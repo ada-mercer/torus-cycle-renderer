@@ -37,6 +37,14 @@ SPIN_PHASE_SHIFT = {
     SpinState.MM: math.pi,
 }
 
+# Loop chirality convention (render-level): spin-up vs spin-down reverse loop handedness.
+SPIN_CHIRALITY = {
+    SpinState.PP: +1,
+    SpinState.PM: +1,
+    SpinState.MP: -1,
+    SpinState.MM: -1,
+}
+
 
 class Electron(FermionParticle, AbstractParticle):
     """Electron rendered from a single resonant mode state (no superpositions).
@@ -147,6 +155,7 @@ class Electron(FermionParticle, AbstractParticle):
         # _transport_winding returns (k_pf, k_p); swap into coordinate axes:
         # u/theta uses p winding, v/phi uses p_f winding.
         k_pf, k_p = self._transport_winding()
+        chirality = SPIN_CHIRALITY[self.spin_state]
         s = np.linspace(0.0, 1.0, points, endpoint=True)
 
         u0 = 0.0
@@ -159,7 +168,7 @@ class Electron(FermionParticle, AbstractParticle):
             v0 = 0.0
 
         u = u0 + 2.0 * np.pi * k_p * s
-        v = v0 + 2.0 * np.pi * k_pf * s
+        v = v0 + 2.0 * np.pi * chirality * k_pf * s
         return u, v
 
     def cycle_time(self) -> float:
