@@ -1,107 +1,104 @@
-# Torus Cycle Renderer — Theory Introduction
+# Introduction
 
-## Purpose
-This project renders *internal-state* particle visuals from a torus-based wave model, rather than purely hand-crafted geometry.
+This project visualizes internal particle-cycle structure on a torus using a clean split between:
 
-The core design goal is:
-- **physics layer** (particle state + solver) separated from
-- **rendering layer** (surface + loop visualization).
+- **State/theory layer** (particle classes and equations)
+- **Rendering layer** (matplotlib/plotly visuals, style, export)
 
----
-
-## Conceptual model
-We use an internal two-cycle manifold:
-\[
-(\theta_f,\theta_b) \in T^2 = S^1 \times S^1,
-\qquad 0\le\theta_f,\theta_b < 2\pi.
-\]
-
-A particle state is represented by:
-1. a winding sector \((n_f,n_b)\), and
-2. a complex internal field \(\Phi(\theta_f,\theta_b,\tau)\).
-
-Using the W2 embedding:
-\[
-\Phi = e^{i(n_f\theta_f+n_b\theta_b)}\,\varphi,
-\]
-we work with shifted derivatives
-\[
-D_f = \partial_{\theta_f}+in_f,
-\qquad
-D_b = \partial_{\theta_b}+in_b.
-\]
+It is intended as a mathematically disciplined visualization environment, not a final experimentally-validated particle solver.
 
 ---
 
-## Baseline wave equation
-With torus radii \(R_f,R_b\), the internal operator is
+## 1) Geometry
+
+Internal coordinates:
 \[
-\Delta_n = \frac{1}{R_f^2}D_f^2 + \frac{1}{R_b^2}D_b^2.
+(u,v) \in [0,2\pi)\times[0,2\pi), \quad T^2 = S^1\times S^1.
 \]
 
-Baseline equation:
+Embedding (major radius \(R\), minor radius \(r\)):
 \[
-\partial_\tau^2\varphi - c_{int}^2\Delta_n\varphi + \Omega_0^2\varphi = 0.
+\mathbf X(u,v)=\big((R+r\cos v)\cos u,\ (R+r\cos v)\sin u,\ r\sin v\big).
 \]
 
-For Fourier mode \(e^{i(r\theta_f+s\theta_b)}\),
-\[
-\omega_{rs}^2 = \Omega_0^2 + c_{int}^2\left(\frac{(r+n_f)^2}{R_f^2}+\frac{(s+n_b)^2}{R_b^2}\right).
-\]
-
-So the model has a discrete mode spectrum on \(T^2\).
+Project conventions:
+- \(u\equiv\theta\): major cycle
+- \(v\equiv\phi\): minor cycle
 
 ---
 
-## What the renderer shows
-The renderer consumes a particle object and produces:
-1. **deformed torus surface** using solved mode amplitude/phase,
-2. **resonant loop** extracted from the solved phase field (spin-conditioned for fermions).
+## 2) Channel convention
 
-This means the default electron path is now *solver-backed*.
+Current lock in code/docs:
+- **bosic** channel \(p\) is associated with \(u=\theta\) (major direction)
+- **fermic** channel \(p_f\) is associated with \(v=\phi\) (minor direction)
+
+This is implemented in electron loop/dynamics mappings and period derivations.
 
 ---
 
-## Class architecture
-- `AbstractParticle`: renderer contract
-- Family layer:
-  - `FermionParticle`
-  - `BosonParticle`
-  - `WeakBosonParticle`
-- `SolverBackedParticle`: numerical steady-state + phase-loop extraction
-- Concrete particles:
-  - `Electron` (solver-backed, spin-aware)
-  - `Photon` (current baseline, can be upgraded similarly)
+## 3) State model
 
-### Policy enforcement
-Family classes enforce constraints before/after solve:
-- base particle policy: valid radii and deformation ranges,
-- fermion policy: valid spin/winding plus nontrivial fermic channel content,
-- weak-boson policy: bounded coupling regime.
+The electron path uses a **single-mode state** (`ElectronState`) with no superposition.
+Core fields include:
+- winding sector
+- resonant mode integers
+- spin state
+- anchor mode (`static` / `evolving`)
+- channel ratio controls (`p_f`, `p`)
 
-Policy violations raise `PolicyViolation` and block rendering of invalid states.
----
-
-## Numerical strategy
-For steady states, we solve
+The rendered deformation uses one phase law:
 \[
-H\psi = \omega^2\psi,
-\quad
-H = -c_{int}^2\Delta_n + \Omega_0^2.
+\varphi(u,v,t)=\nu_p u + \nu_{pf} v - \omega t_{eff} + \phi_s.
 \]
 
-Implementation notes:
-- periodic finite-difference derivative matrices on \(T^2\),
-- sparse Kronecker-structured operator,
-- lowest modes via SciPy sparse eigensolver.
+---
+
+## 4) Spin convention
+
+For matter-branch spin rendering:
+- spin inversion flips **bosic transport chirality**
+- fermic orientation remains fixed
+
+Interpretation: up/down is a transport handedness flip, not an antimatter flip.
 
 ---
 
-## Scope and honesty
-Current outputs are mathematically grounded in the chosen operator and sector, but still depend on model/parameter policy choices (radii, baseline constants, selected sector/mode index).
+## 5) Rendering separation
 
-So these are:
-- **not arbitrary dummy curves**,
-- but also **not final unique particle truths** yet.
+Renderer config owns visual controls such as:
+- torus/loop color
+- opacity/transparency
+- wire/grid settings
+- display time scaling
 
-The docs in this folder make assumptions explicit so calibration/validation can be tightened over time.
+Particle classes do **not** own color/theme decisions.
+
+---
+
+## 6) Backends
+
+- **Matplotlib backend**
+  - robust scripted GIF/MP4 path
+  - fast iteration
+- **Plotly backend**
+  - stronger depth behavior for multi-object scenes
+  - interactive HTML + PNG frame path for GIF stitching
+
+Both consume the same particle/state math.
+
+---
+
+## 7) What is strong vs provisional
+
+### Strong
+- clean state/render split
+- explicit torus-coordinate math
+- anchor-aware cycle closure timing
+- reproducible dual-backend generation
+
+### Provisional
+- physical calibration to real observables is still an open program
+- spin semantics are rendering/model conventions, not full Dirac-observable closure yet
+
+Use this repo as a rigorous visualization lab and iteration ground.

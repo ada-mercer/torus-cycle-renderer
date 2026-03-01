@@ -1,144 +1,114 @@
-# Electron Steady-State Example (with Spin)
+# Electron Steady-State Example
 
-This document gives a concrete, minimal electron example using the current torus-wave model and code path.
-
-**Current code lock:** electron rendering uses a **single-mode state** (`ElectronState`) with no superpositions.
+This document gives a complete practical mapping from electron state definition to rendered outputs.
 
 ---
 
-## 1) Setup
+## 1) Electron state object
 
-We model the electron as a solver-backed fermion in a winding sector.
+`ElectronState` encodes the physical/render-driving state (single-mode, no superpositions):
 
-Current project defaults:
-- sector: \((n_f,n_b)=(1,1)\)
-- radii: \(R_f=2.1\), \(R_b=0.72\) (from current particle config)
-- baseline constants: \(c_{int}=1\), \(\Omega_0=1\)
-- solve lowest eigenmode (`mode_index = 0`)
+- `spin_state` in `{++, +-, -+, --}`
+- `winding`
+- `resonant_mode = (mode_p, mode_pf)`
+- `transport_winding` (optional explicit winding pair)
+- `loop_anchor_mode` in `{static, evolving}`
+- channel scales `pf_value`, `p_value`
+- base geometry and deformation scales
 
-The steady-state eigenproblem is:
+Important convention:
+- `mode_p` multiplies `u/theta` (bosic axis)
+- `mode_pf` multiplies `v/phi` (fermic axis)
+
+---
+
+## 2) Mode phase law
+
+For one mode:
 \[
-H\psi = \omega^2\psi,
-\qquad
-H = -c_{int}^2\Delta_n + \Omega_0^2,
+\varphi(u,v,t)= mode_p\,u + mode_{pf}\,v - \omega t_{eff} + \phi_s,
 \]
 with
 \[
-\Delta_n = \frac{1}{R_f^2}(\partial_{\theta_f}+in_f)^2 + \frac{1}{R_b^2}(\partial_{\theta_b}+in_b)^2.
+t_{eff}=t\cdot s_t, \quad s_t = p/p_f \;\text{(current model policy)}.
+\]
+
+Surface deformation uses:
+\[
+\delta r(u,v,t) \propto \cos\varphi(u,v,t).
 \]
 
 ---
 
-## 2) Simplest mode solution (analytic picture)
+## 3) Resonant loop
 
-For a pure Fourier basis mode:
+Transport loop is parameterized by \(s\in[0,1]\):
 \[
-\psi_{rs}(\theta_f,\theta_b)=e^{i(r\theta_f+s\theta_b)},
-\]
-we get
-\[
-\omega_{rs}^2=
-\Omega_0^2 + c_{int}^2\left(\frac{(r+n_f)^2}{R_f^2}+\frac{(s+n_b)^2}{R_b^2}\right).
-\]
-
-Define shifted integers:
-\[
-\nu_f=r+n_f,
+u(s)=u_0 + 2\pi\,\chi_p\,k_p\,s,
 \qquad
-\nu_b=s+n_b.
+v(s)=v_0 + 2\pi\,k_{pf}\,s,
 \]
-Then
-\[
-\omega^2 = \Omega_0^2 + c_{int}^2\left(\frac{\nu_f^2}{R_f^2}+\frac{\nu_b^2}{R_b^2}\right).
-\]
+where:
+- \(k_{pf},k_p\) come from a rational approximation of \(p_f/p\)
+- \(\chi_p\in\{+1,-1\}\) is spin-driven bosic chirality
 
-For the lowest shell \((\nu_f,\nu_b)=(0,0)\):
-\[
-\omega=\Omega_0=1.
-\]
-
-This is the simplest steady harmonic state (up to global phase).
+### Spin rule in code
+- up-like states: \(\chi_p=+1\)
+- down-like states: \(\chi_p=-1\)
+- fermic winding sign remains fixed
 
 ---
 
-## 3) Numerical steady state used in code
+## 4) Anchor modes
 
-In the solver-backed path, we discretize \(T^2\) and solve the sparse eigenproblem directly.
-
-The solved field is complex:
+### Static anchor
 \[
-\psi(\theta_f,\theta_b) = A(\theta_f,\theta_b)e^{i\phi(\theta_f,\theta_b)}.
+v_0=\frac{-\phi_s-mode_p u_0}{mode_{pf}}.
 \]
+Start point fixed in time.
 
-Time evolution for rendering uses
+### Evolving anchor
 \[
-\psi_t = \psi\,e^{-i\omega t}.
+v_0(t)=\frac{\omega t_{eff}-\phi_s-mode_p u_0}{mode_{pf}}.
 \]
-
-Surface deformation is taken from normalized real amplitude:
-\[
-\delta R(\theta_f,\theta_b,t) \propto \Re[\psi_t].
-\]
-
-This drives the deformed torus geometry.
+Start point follows phase lock over time.
 
 ---
 
-## 4) How spin enters in the current renderer
+## 5) Cycle period used by renderer
 
-Spin state is currently implemented as a **phase-selection rule** over the solved mode.
+`Electron.cycle_time()` implements anchor-aware closure:
 
-Allowed labels:
-- `++`
-- `+-`
-- `-+`
-- `--`
+- static:
+\[
+T_{static}=\frac{2\pi}{\omega s_t}
+\]
+- evolving:
+\[
+T_{evolving}=|mode_{pf}|\,T_{static}
+\]
 
-Each label maps to a target phase \(\phi_*\):
-- `++` \(\to 0\)
-- `+-` \(\to +\pi/2\)
-- `-+` \(\to -\pi/2\)
-- `--` \(\to \pi\)
-
-For each \(u\)-column, the loop chooses \(v\) where solved phase is closest to \(\phi_*\).
-This yields a spin-conditioned resonant loop trajectory.
-
-### Important interpretation note
-This is a **rendering-level spin injection rule**, not yet a full Dirac-spinor measurement map.
-It is a disciplined and explicit interim mechanism that can later be replaced by a stricter spin observable derived from the Dirac branch.
+This period is consumed by `render-cycle` when `--cycle-time` is not explicitly set.
 
 ---
 
-## 5) Minimal reproduction
+## 6) Commands
 
-Render simplest electron steady-state views with different spin labels:
-
+### Spin up (Plotly GIF)
 ```bash
-python scripts/render_frame.py --particle electron --spin-state ++ --time 0.4 --output output/electron_steady_pp.png
-python scripts/render_frame.py --particle electron --spin-state=-- --time 0.4 --output output/electron_steady_mm.png
+render-cycle --backend plotly --particle electron --spin-state ++ --loop-anchor-mode evolving --duration 3.2 --fps 14 --format gif --output output/electron_spin_up.gif
 ```
 
-(Use `--spin-state=--` with `=` to avoid CLI parsing ambiguity.)
+### Spin down (Plotly GIF)
+```bash
+render-cycle --backend plotly --particle electron --spin-state=-- --loop-anchor-mode evolving --duration 3.2 --fps 14 --format gif --output output/electron_spin_down.gif
+```
+
+(`--spin-state=--` uses `=` to avoid CLI parsing ambiguity.)
 
 ---
 
-## 6) What is physically strong vs provisional
+## 7) Why up/down may still look similar without cues
 
-### Strong now
-- steady-state solution of chosen torus operator is real (numerically solved),
-- winding-sector embedding is explicit,
-- rendered deformation/loop are derived from solved complex field.
-
-### Provisional now
-- electron sector and constants are policy defaults,
-- spin mapping is phase-target proxy (not final Dirac observable map),
-- no global data-calibration lock yet.
-
----
-
-## 7) Next hardening steps
-
-1. Add explicit CLI control for sector/mode index (`--nf --nb --mode-index`).
-2. Add Dirac-branch solver and compare spin-conditioned loops against spinor bilinear observables.
-3. Add calibration notebook/script tying \((R_f,R_b,\Omega_0)\) to chosen correspondence constraints.
-4. Promote from “rendering spin proxy” to “operator-derived spin readout”.
+On symmetric geometry and fixed camera, opposite chirality can look deceptively similar in stills.
+Use GIFs and/or add a directional marker for immediate handedness visibility.

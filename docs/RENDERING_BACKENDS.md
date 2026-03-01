@@ -1,21 +1,69 @@
-# Rendering Backends Strategy
+# Rendering Backends
 
-## Why two backends
-Matplotlib is great for lightweight scripted output and GIF pipelines, but mplot3d uses painter-style sorting that can be imperfect for multi-object occlusion.
+The project intentionally supports two parallel render paths.
 
-To improve depth correctness while keeping Matplotlib, the project now supports:
-- **Matplotlib backend** (default): fast pipeline + existing GIF flow
-- **Plotly backend**: stronger z-buffer style multi-object ordering in interactive/WebGL rendering
+---
 
-## Geometry export bridge
-Any frame can now export geometry:
-- `*_geom.npz` (raw arrays)
-- `*_torus.obj` (surface mesh)
-- `*_loop.obj` (polyline)
+## 1) Matplotlib backend
 
-This allows rendering the same solved state in external engines (VTK/Blender/etc.) without changing physics code.
+Command switch:
+```bash
+--backend matplotlib
+```
 
-## Recommended workflow
-1. Iterate quickly with Matplotlib (`--backend matplotlib`).
-2. Validate occlusion/depth with Plotly (`--backend plotly`).
-3. For production visuals, export geometry and render in a dedicated 3D engine if needed.
+### Strengths
+- fast and simple scripted pipeline
+- stable GIF/MP4 generation
+- good for batch iteration
+
+### Limitations
+- mplot3d uses painter-style ordering, so complex occlusion can be imperfect
+
+---
+
+## 2) Plotly backend
+
+Command switch:
+```bash
+--backend plotly
+```
+
+### Strengths
+- stronger multi-object depth behavior (WebGL)
+- good interactive inspection
+- can export PNG frames for GIF stitching
+
+### Requirements for image export
+Plotly static export depends on Kaleido/Chrome runtime dependencies.
+If missing, install Chrome + required system libs.
+
+---
+
+## 3) Shared controls (both backends)
+
+Both use:
+- `--torus-color`
+- `--loop-color`
+- `--time-scale`
+- same particle state arguments (`--particle`, `--spin-state`, `--loop-anchor-mode`)
+
+So style can be matched across pipelines.
+
+---
+
+## 4) Geometry export bridge
+
+`render-frame --export-geometry` writes:
+- `*_geom.npz`
+- `*_torus.obj`
+- `*_loop.obj`
+
+Use this when you want to render identical state geometry in an external engine (Blender/VTK/etc.).
+
+---
+
+## 5) Recommended workflow
+
+1. Iterate quickly with Matplotlib GIF.
+2. Validate depth-sensitive views in Plotly.
+3. Export geometry for external production rendering when needed.
