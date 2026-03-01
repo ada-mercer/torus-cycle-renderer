@@ -1,5 +1,23 @@
 from .base import AbstractParticle
+from .families import (
+    ParticleFamily,
+    FermionParticle,
+    BosonParticle,
+    WeakBosonParticle,
+    SolverBackedParticle,
+    SpinState,
+)
 from .electron import Electron
 from .photon import Photon
 
-__all__ = ["AbstractParticle", "Electron", "Photon"]
+__all__ = [
+    "AbstractParticle",
+    "ParticleFamily",
+    "FermionParticle",
+    "BosonParticle",
+    "WeakBosonParticle",
+    "SolverBackedParticle",
+    "SpinState",
+    "Electron",
+    "Photon",
+]

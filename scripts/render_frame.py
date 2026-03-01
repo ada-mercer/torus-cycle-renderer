@@ -12,6 +12,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Render one torus-cycle frame")
     parser.add_argument("--particle", default="electron", choices=["electron", "photon"])
     parser.add_argument("--time", type=float, default=0.0)
+    parser.add_argument("--spin-state", default="++", choices=["++", "+-", "-+", "--"])
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=720)
     parser.add_argument("--dpi", type=int, default=100)
@@ -20,7 +21,7 @@ def main() -> None:
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
 
-    particle = build_scene(args.particle)
+    particle = build_scene(args.particle, spin_state=args.spin_state)
     renderer = TorusRenderer(RenderConfig(width=args.width, height=args.height, dpi=args.dpi))
     renderer.render(particle=particle, time=args.time, output_path=args.output)
     print(f"Rendered: {args.output}")

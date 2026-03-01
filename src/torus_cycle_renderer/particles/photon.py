@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from .base import AbstractParticle, ParticleParams
+from .families import BosonParticle
 
 
-class Photon(AbstractParticle):
+class Photon(BosonParticle, AbstractParticle):
     @property
     def name(self) -> str:
         return "photon"

@@ -9,8 +9,12 @@ PARTICLES = {
 }
 
 
-def build_scene(name: str) -> AbstractParticle:
+def build_scene(name: str, spin_state: str = "++") -> AbstractParticle:
     key = name.strip().lower()
     if key not in PARTICLES:
         raise ValueError(f"Unknown particle '{name}'. Available: {', '.join(PARTICLES)}")
-    return PARTICLES[key]()
+
+    cls = PARTICLES[key]
+    if key == "electron":
+        return cls(spin_state=spin_state)
+    return cls()

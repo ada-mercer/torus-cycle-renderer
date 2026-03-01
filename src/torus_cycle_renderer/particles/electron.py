@@ -1,12 +1,18 @@
 from __future__ import annotations
 
-from .base import AbstractParticle, ParticleParams
+from .base import ParticleParams
+from .families import FermionParticle, SolverBackedParticle
 
 
-class Electron(AbstractParticle):
+class Electron(SolverBackedParticle, FermionParticle):
     @property
     def name(self) -> str:
-        return "electron"
+        return f"electron[{self.spin_state.value}]"
+
+    @property
+    def winding(self) -> tuple[int, int]:
+        # Working default from current exploration: W2 sector (1,1)
+        return (1, 1)
 
     @property
     def params(self) -> ParticleParams:

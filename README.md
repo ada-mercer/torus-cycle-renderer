@@ -9,8 +9,8 @@ Fresh-start torus-cycle rendering project for internal particle-cycle visualizat
 - Make output dimensions image-friendly (for social/media/docs).
 
 ## Architecture
-- `particles/` -> abstract particle API + concrete particles (`Electron`, `Photon`)
-- `math/` -> torus geometry and deformation utilities
+- `particles/` -> abstract particle API + family layers (`FermionParticle`, `BosonParticle`, `WeakBosonParticle`) + concrete particles (`Electron`, `Photon`)
+- `math/` -> torus geometry, resonance ODE tools, and steady-state solver
 - `rendering/` -> renderer that only depends on abstract particle contract
 - `scenes/` -> scene builder for demo compositions
 - `scripts/` -> CLI entry points (single frame, animation)
@@ -23,6 +23,7 @@ pip install -e .
 
 python scripts/render_frame.py \
   --particle electron \
+  --spin-state ++ \
   --width 1280 --height 720 \
   --time 0.0 \
   --output output/electron_frame.png
