@@ -33,4 +33,6 @@ The default scene renders:
 1. a deformed torus surface,
 2. a resonant loop tied to particle phase dynamics.
 
+The resonant loop is now generated via a small **SciPy ODE integration** (`scipy.integrate.solve_ivp`) for coupled phase dynamics.
+
 This is a clean baseline to iterate math without carrying legacy assumptions.

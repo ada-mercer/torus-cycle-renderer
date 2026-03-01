@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import numpy as np
 
+from torus_cycle_renderer.math import coupled_phase_trajectory
+
 
 @dataclass(frozen=True)
 class ParticleParams:
@@ -15,6 +17,8 @@ class ParticleParams:
     loop_turn_u: int
     loop_turn_v: int
     phase_speed: float
+    resonance_coupling: float = 0.22
+    resonance_detuning: float = 0.03
     color: str = "#4cc9f0"
     loop_color: str = "#f72585"
 
@@ -39,7 +43,11 @@ class AbstractParticle(ABC):
 
     def resonant_loop(self, t: float, points: int = 900) -> tuple[np.ndarray, np.ndarray]:
         p = self.params
-        s = np.linspace(0.0, 2 * np.pi, points)
-        u = p.loop_turn_u * s + 0.25 * p.phase_speed * t
-        v = p.loop_turn_v * s - 0.50 * p.phase_speed * t
-        return np.mod(u, 2 * np.pi), np.mod(v, 2 * np.pi)
+        return coupled_phase_trajectory(
+            t=t,
+            points=points,
+            base_u=float(p.loop_turn_u),
+            base_v=float(p.loop_turn_v),
+            coupling=p.resonance_coupling,
+            detuning=p.resonance_detuning * p.phase_speed,
+        )
