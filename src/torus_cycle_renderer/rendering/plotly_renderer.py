@@ -20,8 +20,8 @@ class PlotlyRenderConfig:
     mesh_opacity: float = 0.46
     gridline_stride_u: int = 5
     gridline_stride_v: int = 4
-    gridline_width: float = 1.0
-    gridline_alpha: float = 0.055
+    gridline_width: float = 0.9
+    gridline_alpha: float = 0.10
 
 
 class PlotlyTorusRenderer:
@@ -49,13 +49,9 @@ class PlotlyTorusRenderer:
         return np.asarray(ii), np.asarray(jj), np.asarray(kk)
 
     def _gridline_highlight_rgba(self, base_color: str, alpha: float) -> str:
-        r, g, b = to_rgb(base_color)
-        # blend toward white for a subtle highlight tone
-        blend = 0.45
-        rr = (1.0 - blend) * r + blend * 1.0
-        gg = (1.0 - blend) * g + blend * 1.0
-        bb = (1.0 - blend) * b + blend * 1.0
-        return f"rgba({int(rr*255)}, {int(gg*255)}, {int(bb*255)}, {alpha:.3f})"
+        _ = to_rgb(base_color)  # keep signature compatible; explicit blue requested.
+        # Blue-toned gridlines with high transparency.
+        return f"rgba(120, 170, 255, {alpha:.3f})"
 
     def render(self, particle: AbstractParticle, time: float, output_path: str, export_geometry: bool = False) -> None:
         p = particle.params
