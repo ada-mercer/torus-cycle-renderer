@@ -8,7 +8,7 @@ from .families import (
     SpinState,
     PolicyViolation,
 )
-from .electron import Electron
+from .electron import Electron, ElectronState
 from .photon import Photon
 
 __all__ = [
@@ -21,5 +21,6 @@ __all__ = [
     "SpinState",
     "PolicyViolation",
     "Electron",
+    "ElectronState",
     "Photon",
 ]

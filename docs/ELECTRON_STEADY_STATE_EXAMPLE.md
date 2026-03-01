@@ -2,6 +2,8 @@
 
 This document gives a concrete, minimal electron example using the current torus-wave model and code path.
 
+**Current code lock:** electron rendering uses a **single-mode state** (`ElectronState`) with no superpositions.
+
 ---
 
 ## 1) Setup
