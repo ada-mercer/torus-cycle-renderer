@@ -16,7 +16,11 @@ class PlotlyRenderConfig:
     height: int = 720
     background: str = "#0e1117"
     loop_lift: float = 0.04
-    mesh_opacity: float = 0.62
+    mesh_opacity: float = 0.50
+    gridline_stride_u: int = 10
+    gridline_stride_v: int = 8
+    gridline_width: float = 2.0
+    gridline_color: str = "rgba(255,255,255,0.22)"
 
 
 class PlotlyTorusRenderer:
@@ -82,7 +86,37 @@ class PlotlyTorusRenderer:
             name="loop",
         )
 
-        fig = go.Figure(data=[mesh, loop])
+        grid_traces: list[go.Scatter3d] = []
+
+        # u-lines (vary v index, sweep u)
+        for iv in range(0, nv, max(cfg.gridline_stride_v, 1)):
+            grid_traces.append(
+                go.Scatter3d(
+                    x=x[iv, :],
+                    y=y[iv, :],
+                    z=z[iv, :],
+                    mode="lines",
+                    line=dict(color=cfg.gridline_color, width=cfg.gridline_width),
+                    hoverinfo="skip",
+                    showlegend=False,
+                )
+            )
+
+        # v-lines (vary u index, sweep v)
+        for iu in range(0, nu, max(cfg.gridline_stride_u, 1)):
+            grid_traces.append(
+                go.Scatter3d(
+                    x=x[:, iu],
+                    y=y[:, iu],
+                    z=z[:, iu],
+                    mode="lines",
+                    line=dict(color=cfg.gridline_color, width=cfg.gridline_width),
+                    hoverinfo="skip",
+                    showlegend=False,
+                )
+            )
+
+        fig = go.Figure(data=[mesh, *grid_traces, loop])
         fig.update_layout(
             width=cfg.width,
             height=cfg.height,

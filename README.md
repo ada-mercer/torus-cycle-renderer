@@ -29,7 +29,7 @@ python scripts/render_frame.py \
   --output output/electron_frame.png
 ```
 
-Depth-accurate alternative backend (Plotly):
+Depth-accurate alternative backend (Plotly, with mesh gridlines + higher transparency):
 ```bash
 python scripts/render_frame.py \
   --backend plotly \
