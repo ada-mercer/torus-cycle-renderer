@@ -29,6 +29,16 @@ python scripts/render_frame.py \
   --output output/electron_frame.png
 ```
 
+Render full cycle GIF:
+```bash
+python scripts/render_cycle.py \
+  --particle electron \
+  --spin-state ++ \
+  --frames 120 --fps 30 \
+  --format gif \
+  --output output/electron_cycle.gif
+```
+
 ## First Demo
 The default scene renders:
 1. a deformed torus surface,
