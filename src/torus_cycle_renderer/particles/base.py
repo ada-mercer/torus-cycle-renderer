@@ -21,11 +21,8 @@ class ParticleParams:
     # pf_value ~ fermic channel scale, p_value ~ bosic channel scale.
     pf_value: float = 1.0
     p_value: float = 0.33
-    visual_time_scale: float = 1.0
     resonance_coupling: float = 0.22
     resonance_detuning: float = 0.03
-    color: str = "#4cc9f0"
-    loop_color: str = "#f72585"
 
 
 class AbstractParticle(ABC):

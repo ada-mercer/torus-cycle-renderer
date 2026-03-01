@@ -29,6 +29,9 @@ def main() -> None:
     parser.add_argument("--height", type=int, default=720)
     parser.add_argument("--dpi", type=int, default=100)
     parser.add_argument("--backend", default="matplotlib", choices=["matplotlib", "plotly"])
+    parser.add_argument("--torus-color", default="#3a86ff")
+    parser.add_argument("--loop-color", default="#ff006e")
+    parser.add_argument("--time-scale", type=float, default=1.0)
     parser.add_argument("--export-geometry", action="store_true")
     parser.add_argument("--output", default="output/frame.png")
     args = parser.parse_args()
@@ -42,16 +45,26 @@ def main() -> None:
     )
 
     if args.backend == "matplotlib":
-        renderer = TorusRenderer(RenderConfig(width=args.width, height=args.height, dpi=args.dpi))
+        renderer = TorusRenderer(
+            RenderConfig(
+                width=args.width,
+                height=args.height,
+                dpi=args.dpi,
+                torus_color=args.torus_color,
+                loop_color=args.loop_color,
+                time_scale=args.time_scale,
+            )
+        )
         renderer.render(particle=particle, time=args.time, output_path=args.output)
 
         if args.export_geometry:
             p = particle.params
             u, v = torus_frame()
-            deform = particle.deformation(u, v, args.time)
+            t_vis = args.time * args.time_scale
+            deform = particle.deformation(u, v, t_vis)
             x, y, z = torus_surface(u, v, p.major_radius, p.minor_radius, deformation=deform)
-            lu, lv = particle.resonant_loop(args.time)
-            ldef = particle.deformation(lu, lv, args.time)
+            lu, lv = particle.resonant_loop(t_vis)
+            ldef = particle.deformation(lu, lv, t_vis)
             lx, ly, lz = torus_surface(lu, lv, p.major_radius, p.minor_radius, deformation=ldef + 0.04)
             stem = Path(args.output).with_suffix("")
             export_scene_npz(str(stem) + "_geom.npz", x, y, z, lx, ly, lz)
@@ -59,7 +72,15 @@ def main() -> None:
             export_loop_obj(str(stem) + "_loop.obj", lx, ly, lz)
     else:
         # Plotly backend gives stronger depth-accurate multi-object rendering.
-        renderer = PlotlyTorusRenderer(PlotlyRenderConfig(width=args.width, height=args.height))
+        renderer = PlotlyTorusRenderer(
+            PlotlyRenderConfig(
+                width=args.width,
+                height=args.height,
+                torus_color=args.torus_color,
+                loop_color=args.loop_color,
+                time_scale=args.time_scale,
+            )
+        )
         renderer.render(
             particle=particle,
             time=args.time,

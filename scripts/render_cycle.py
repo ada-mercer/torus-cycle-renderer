@@ -34,6 +34,9 @@ def main() -> None:
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=720)
     parser.add_argument("--dpi", type=int, default=100)
+    parser.add_argument("--torus-color", default="#3a86ff")
+    parser.add_argument("--loop-color", default="#ff006e")
+    parser.add_argument("--time-scale", type=float, default=1.0)
     parser.add_argument("--frames", type=int, default=None)
     parser.add_argument("--fps", type=int, default=30)
     parser.add_argument("--duration", type=float, default=4.0, help="Output duration in seconds (target 3-5s)")
@@ -56,10 +59,18 @@ def main() -> None:
     )
 
     frames = args.frames if args.frames is not None else max(2, int(round(args.duration * args.fps)))
-    cycle_time = args.cycle_time if args.cycle_time is not None else float(particle.cycle_time())
+    base_cycle_time = float(particle.cycle_time())
+    cycle_time = args.cycle_time if args.cycle_time is not None else (base_cycle_time / max(args.time_scale, 1e-9))
 
     if args.backend == "matplotlib":
-        render_cfg = RenderConfig(width=args.width, height=args.height, dpi=args.dpi)
+        render_cfg = RenderConfig(
+            width=args.width,
+            height=args.height,
+            dpi=args.dpi,
+            torus_color=args.torus_color,
+            loop_color=args.loop_color,
+            time_scale=args.time_scale,
+        )
         anim_cfg = AnimationConfig(
             frames=frames,
             cycle_time=cycle_time,
@@ -70,7 +81,15 @@ def main() -> None:
         animator.build(particle=particle, output_path=args.output)
     else:
         # Plotly path: render per-frame PNG with WebGL pipeline, then stitch via imageio.
-        pr = PlotlyTorusRenderer(PlotlyRenderConfig(width=args.width, height=args.height))
+        pr = PlotlyTorusRenderer(
+            PlotlyRenderConfig(
+                width=args.width,
+                height=args.height,
+                torus_color=args.torus_color,
+                loop_color=args.loop_color,
+                time_scale=args.time_scale,
+            )
+        )
         times = _frame_times(frames, cycle_time)
 
         with TemporaryDirectory() as td:

@@ -20,6 +20,4 @@ class Photon(BosonParticle, AbstractParticle):
             loop_turn_u=4,
             loop_turn_v=4,
             phase_speed=2.4,
-            color="#ffd166",
-            loop_color="#ef476f",
         )

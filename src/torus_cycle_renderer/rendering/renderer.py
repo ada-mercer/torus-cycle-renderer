@@ -31,6 +31,11 @@ class RenderConfig:
     loop_linewidth: float = 2.6
     loop_lift: float = 0.05
 
+    # Visual styling (renderer-owned)
+    torus_color: str = "#3a86ff"
+    loop_color: str = "#ff006e"
+    time_scale: float = 1.0
+
     # Lighting / shadow
     light_azdeg: float = 35.0
     light_altdeg: float = 45.0
@@ -95,8 +100,10 @@ class TorusRenderer:
         fig.patch.set_facecolor(cfg.background)
         ax.set_facecolor(cfg.background)
 
+        t_vis = time * cfg.time_scale
+
         u, v = torus_frame()
-        deform = particle.deformation(u, v, time)
+        deform = particle.deformation(u, v, t_vis)
         x, y, z = torus_surface(u, v, p.major_radius, p.minor_radius, deformation=deform)
 
         # Soft shadow on ground plane for depth cue.
@@ -114,7 +121,7 @@ class TorusRenderer:
             shade=False,
         )
 
-        facecolors = self._surface_facecolors(x, y, z, p.color)
+        facecolors = self._surface_facecolors(x, y, z, cfg.torus_color)
         ax.plot_surface(
             x,
             y,
@@ -139,8 +146,8 @@ class TorusRenderer:
             linewidth=cfg.wireframe_linewidth,
         )
 
-        lu, lv = particle.resonant_loop(time)
-        ldef = particle.deformation(lu, lv, time)
+        lu, lv = particle.resonant_loop(t_vis)
+        ldef = particle.deformation(lu, lv, t_vis)
         lx, ly, lz = torus_surface(
             lu,
             lv,
@@ -151,11 +158,11 @@ class TorusRenderer:
 
         # Segment collections give better depth sorting than one monolithic line artist.
         # Add a soft under-stroke + core stroke for readability over mesh.
-        loop_glow = self._line_collection(lx, ly, lz, p.loop_color, cfg.loop_linewidth * 1.8)
+        loop_glow = self._line_collection(lx, ly, lz, cfg.loop_color, cfg.loop_linewidth * 1.8)
         loop_glow.set_alpha(0.25)
         ax.add_collection3d(loop_glow)
 
-        loop_collection = self._line_collection(lx, ly, lz, p.loop_color, cfg.loop_linewidth)
+        loop_collection = self._line_collection(lx, ly, lz, cfg.loop_color, cfg.loop_linewidth)
         loop_collection.set_alpha(0.98)
         ax.add_collection3d(loop_collection)
 

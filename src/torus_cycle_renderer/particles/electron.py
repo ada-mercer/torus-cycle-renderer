@@ -25,7 +25,6 @@ class ElectronState:
     pf_value: float = 1.0
     p_value: float = 1.0 / 3.0
     phase_speed: float = 1.2
-    visual_time_scale: float = 0.5
     major_radius: float = 2.1
     minor_radius: float = 0.72
     deform_amp: float = 0.12
@@ -61,7 +60,6 @@ class Electron(FermionParticle, AbstractParticle):
             pf_value=base.pf_value,
             p_value=base.p_value,
             phase_speed=base.phase_speed,
-            visual_time_scale=base.visual_time_scale,
             major_radius=base.major_radius,
             minor_radius=base.minor_radius,
             deform_amp=base.deform_amp,
@@ -92,9 +90,6 @@ class Electron(FermionParticle, AbstractParticle):
             phase_speed=self.state.phase_speed,
             pf_value=self.state.pf_value,
             p_value=self.state.p_value,
-            visual_time_scale=self.state.visual_time_scale,
-            color="#3a86ff",
-            loop_color="#ff006e",
         )
 
     def _effective_omega(self) -> float:
@@ -106,7 +101,7 @@ class Electron(FermionParticle, AbstractParticle):
 
     def _time_scale(self) -> float:
         p = self.params
-        return p.visual_time_scale * (max(p.p_value, 1e-9) / max(p.pf_value, 1e-9))
+        return max(p.p_value, 1e-9) / max(p.pf_value, 1e-9)
 
     def _transport_winding(self) -> tuple[int, int]:
         """Closed-loop winding (k_f, k_b) approximating m ∝ p_f e_f + p e_b."""

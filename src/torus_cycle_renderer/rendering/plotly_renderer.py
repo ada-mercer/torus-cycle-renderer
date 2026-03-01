@@ -17,11 +17,16 @@ class PlotlyRenderConfig:
     height: int = 720
     background: str = "#0e1117"
     loop_lift: float = 0.04
-    mesh_opacity: float = 0.1
+    mesh_opacity: float = 0.10
     gridline_stride_u: int = 5
     gridline_stride_v: int = 4
     gridline_width: float = 0.6
-    gridline_alpha: float = 0.035
+    gridline_alpha: float = 0.10
+
+    # Visual styling (renderer-owned)
+    torus_color: str = "#3a86ff"
+    loop_color: str = "#ff006e"
+    time_scale: float = 1.0
 
 
 class PlotlyTorusRenderer:
@@ -56,13 +61,14 @@ class PlotlyTorusRenderer:
     def render(self, particle: AbstractParticle, time: float, output_path: str, export_geometry: bool = False) -> None:
         p = particle.params
         cfg = self.config
+        t_vis = time * cfg.time_scale
 
         u, v = torus_frame()
-        deform = particle.deformation(u, v, time)
+        deform = particle.deformation(u, v, t_vis)
         x, y, z = torus_surface(u, v, p.major_radius, p.minor_radius, deformation=deform)
 
-        lu, lv = particle.resonant_loop(time)
-        ldef = particle.deformation(lu, lv, time)
+        lu, lv = particle.resonant_loop(t_vis)
+        ldef = particle.deformation(lu, lv, t_vis)
         lx, ly, lz = torus_surface(lu, lv, p.major_radius, p.minor_radius, deformation=ldef + cfg.loop_lift)
 
         nv, nu = x.shape
@@ -75,7 +81,7 @@ class PlotlyTorusRenderer:
             i=i,
             j=j,
             k=k,
-            color=p.color,
+            color=cfg.torus_color,
             opacity=cfg.mesh_opacity,
             flatshading=False,
             lighting=dict(ambient=0.4, diffuse=0.7, specular=0.25, roughness=0.6, fresnel=0.1),
@@ -88,12 +94,12 @@ class PlotlyTorusRenderer:
             y=ly,
             z=lz,
             mode="lines",
-            line=dict(color=p.loop_color, width=7),
+            line=dict(color=cfg.loop_color, width=7),
             name="loop",
         )
 
         grid_traces: list[go.Scatter3d] = []
-        gridline_color = self._gridline_highlight_rgba(p.color, cfg.gridline_alpha)
+        gridline_color = self._gridline_highlight_rgba(cfg.torus_color, cfg.gridline_alpha)
 
         # u-lines (vary v index, sweep u)
         for iv in range(0, nv, max(cfg.gridline_stride_v, 1)):
