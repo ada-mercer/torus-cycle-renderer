@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
+from matplotlib.colors import to_rgb
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import numpy as np
 
 from torus_cycle_renderer.math import torus_surface, torus_frame
@@ -16,16 +18,71 @@ class RenderConfig:
     dpi: int = 100
     elev: float = 22.0
     azim: float = 36.0
-    face_alpha: float = 0.42
-    surface_edge_linewidth: float = 0.06
-    loop_linewidth: float = 2.2
-    loop_lift: float = 0.03
+
+    # Surface / wireframe
+    face_alpha: float = 0.48
+    surface_edge_linewidth: float = 0.08
+    surface_edge_alpha: float = 0.22
+    wireframe_linewidth: float = 0.25
+    wireframe_alpha: float = 0.16
+    wireframe_stride: int = 6
+
+    # Loop
+    loop_linewidth: float = 2.4
+    loop_lift: float = 0.02
+
+    # Lighting / shadow
+    light_azdeg: float = 35.0
+    light_altdeg: float = 45.0
+    ambient: float = 0.35
+    diffuse: float = 0.65
+    shadow_alpha: float = 0.14
+
     background: str = "#0e1117"
+
+
+def _normalize(v: np.ndarray, eps: float = 1e-12) -> np.ndarray:
+    n = np.linalg.norm(v, axis=-1, keepdims=True)
+    return v / np.clip(n, eps, None)
 
 
 class TorusRenderer:
     def __init__(self, config: RenderConfig | None = None):
         self.config = config or RenderConfig()
+
+    def _surface_normals(self, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+        p = np.stack([x, y, z], axis=-1)
+        du = np.roll(p, -1, axis=1) - np.roll(p, 1, axis=1)
+        dv = np.roll(p, -1, axis=0) - np.roll(p, 1, axis=0)
+        n = np.cross(du, dv)
+        return _normalize(n)
+
+    def _surface_facecolors(self, x: np.ndarray, y: np.ndarray, z: np.ndarray, base_color: str) -> np.ndarray:
+        cfg = self.config
+        base = np.array(to_rgb(base_color))[None, None, :]
+
+        normals = self._surface_normals(x, y, z)
+
+        az = np.deg2rad(cfg.light_azdeg)
+        alt = np.deg2rad(cfg.light_altdeg)
+        ldir = np.array([
+            np.cos(alt) * np.cos(az),
+            np.cos(alt) * np.sin(az),
+            np.sin(alt),
+        ])
+
+        lambert = np.clip(np.sum(normals * ldir[None, None, :], axis=-1), 0.0, 1.0)
+        intensity = np.clip(cfg.ambient + cfg.diffuse * lambert, 0.0, 1.0)
+
+        rgb = np.clip(base * intensity[..., None], 0.0, 1.0)
+        alpha = np.full((*rgb.shape[:2], 1), cfg.face_alpha)
+        return np.concatenate([rgb, alpha], axis=-1)
+
+    def _line_collection(self, x: np.ndarray, y: np.ndarray, z: np.ndarray, color: str, lw: float) -> Line3DCollection:
+        pts = np.column_stack([x, y, z])
+        segs = np.stack([pts[:-1], pts[1:]], axis=1)
+        coll = Line3DCollection(segs, colors=color, linewidths=lw, alpha=0.98)
+        return coll
 
     def render(self, particle: AbstractParticle, time: float, output_path: str) -> None:
         p = particle.params
@@ -33,7 +90,7 @@ class TorusRenderer:
 
         figsize = (cfg.width / cfg.dpi, cfg.height / cfg.dpi)
         fig = plt.figure(figsize=figsize, dpi=cfg.dpi)
-        ax = fig.add_subplot(111, projection="3d")
+        ax = fig.add_subplot(111, projection="3d", computed_zorder=True)
 
         fig.patch.set_facecolor(cfg.background)
         ax.set_facecolor(cfg.background)
@@ -42,6 +99,22 @@ class TorusRenderer:
         deform = particle.deformation(u, v, time)
         x, y, z = torus_surface(u, v, p.major_radius, p.minor_radius, deformation=deform)
 
+        # Soft shadow on ground plane for depth cue.
+        z_floor = np.min(z) - 0.12 * (p.major_radius + p.minor_radius)
+        ax.plot_surface(
+            x,
+            y,
+            np.full_like(z, z_floor),
+            rstride=2,
+            cstride=2,
+            linewidth=0,
+            antialiased=False,
+            color="black",
+            alpha=cfg.shadow_alpha,
+            shade=False,
+        )
+
+        facecolors = self._surface_facecolors(x, y, z, p.color)
         ax.plot_surface(
             x,
             y,
@@ -49,16 +122,25 @@ class TorusRenderer:
             rstride=1,
             cstride=1,
             linewidth=cfg.surface_edge_linewidth,
-            edgecolor=(1, 1, 1, 0.18),
+            edgecolor=(1, 1, 1, cfg.surface_edge_alpha),
             antialiased=True,
-            alpha=cfg.face_alpha,
-            color=p.color,
+            facecolors=facecolors,
             shade=False,
+        )
+
+        # Secondary wireframe layer for shape readability.
+        ax.plot_wireframe(
+            x,
+            y,
+            z,
+            rstride=cfg.wireframe_stride,
+            cstride=cfg.wireframe_stride,
+            color=(1, 1, 1, cfg.wireframe_alpha),
+            linewidth=cfg.wireframe_linewidth,
         )
 
         lu, lv = particle.resonant_loop(time)
         ldef = particle.deformation(lu, lv, time)
-        # Slight outward lift keeps loop visible through transparency while staying surface-locked.
         lx, ly, lz = torus_surface(
             lu,
             lv,
@@ -66,12 +148,15 @@ class TorusRenderer:
             p.minor_radius,
             deformation=ldef + cfg.loop_lift,
         )
-        ax.plot(lx, ly, lz, color=p.loop_color, linewidth=cfg.loop_linewidth, alpha=0.98)
+
+        # Segment collection gives better depth sorting than one monolithic line artist.
+        loop_collection = self._line_collection(lx, ly, lz, p.loop_color, cfg.loop_linewidth)
+        ax.add_collection3d(loop_collection)
 
         extent = p.major_radius + p.minor_radius + p.deform_amp + 0.2
         ax.set_xlim(-extent, extent)
         ax.set_ylim(-extent, extent)
-        ax.set_zlim(-extent * 0.75, extent * 0.75)
+        ax.set_zlim(z_floor, extent * 0.75)
         ax.set_box_aspect((1, 1, 0.6))
 
         ax.view_init(elev=cfg.elev, azim=cfg.azim)
