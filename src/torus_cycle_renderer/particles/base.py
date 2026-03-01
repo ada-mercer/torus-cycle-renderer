@@ -1,0 +1,45 @@
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+import numpy as np
+
+
+@dataclass(frozen=True)
+class ParticleParams:
+    major_radius: float
+    minor_radius: float
+    deform_amp: float
+    deform_mode_u: int
+    deform_mode_v: int
+    loop_turn_u: int
+    loop_turn_v: int
+    phase_speed: float
+    color: str = "#4cc9f0"
+    loop_color: str = "#f72585"
+
+
+class AbstractParticle(ABC):
+    """Abstract contract used by the renderer."""
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        ...
+
+    @property
+    @abstractmethod
+    def params(self) -> ParticleParams:
+        ...
+
+    def deformation(self, u: np.ndarray, v: np.ndarray, t: float) -> np.ndarray:
+        p = self.params
+        phase = p.deform_mode_u * u + p.deform_mode_v * v - p.phase_speed * t
+        return p.deform_amp * np.cos(phase)
+
+    def resonant_loop(self, t: float, points: int = 900) -> tuple[np.ndarray, np.ndarray]:
+        p = self.params
+        s = np.linspace(0.0, 2 * np.pi, points)
+        u = p.loop_turn_u * s + 0.25 * p.phase_speed * t
+        v = p.loop_turn_v * s - 0.50 * p.phase_speed * t
+        return np.mod(u, 2 * np.pi), np.mod(v, 2 * np.pi)
