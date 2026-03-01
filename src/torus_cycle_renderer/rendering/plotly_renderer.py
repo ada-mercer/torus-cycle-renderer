@@ -17,11 +17,11 @@ class PlotlyRenderConfig:
     height: int = 720
     background: str = "#0e1117"
     loop_lift: float = 0.04
-    mesh_opacity: float = 0.50
-    gridline_stride_u: int = 10
-    gridline_stride_v: int = 8
-    gridline_width: float = 1.4
-    gridline_alpha: float = 0.12
+    mesh_opacity: float = 0.46
+    gridline_stride_u: int = 5
+    gridline_stride_v: int = 4
+    gridline_width: float = 1.0
+    gridline_alpha: float = 0.055
 
 
 class PlotlyTorusRenderer:
@@ -51,7 +51,7 @@ class PlotlyTorusRenderer:
     def _gridline_highlight_rgba(self, base_color: str, alpha: float) -> str:
         r, g, b = to_rgb(base_color)
         # blend toward white for a subtle highlight tone
-        blend = 0.62
+        blend = 0.45
         rr = (1.0 - blend) * r + blend * 1.0
         gg = (1.0 - blend) * g + blend * 1.0
         bb = (1.0 - blend) * b + blend * 1.0
