@@ -56,3 +56,8 @@ class AbstractParticle(ABC):
             coupling=p.resonance_coupling,
             detuning=p.resonance_detuning * p.phase_speed,
         )
+
+    def cycle_time(self) -> float:
+        """Return time interval for one visually complete cycle."""
+        p = self.params
+        return (2.0 * np.pi) / max(abs(p.phase_speed), 1e-9)

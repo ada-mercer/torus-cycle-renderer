@@ -17,7 +17,7 @@ class RenderConfig:
     elev: float = 22.0
     azim: float = 36.0
     face_alpha: float = 0.42
-    surface_edge_linewidth: float = 0.0
+    surface_edge_linewidth: float = 0.06
     loop_linewidth: float = 2.2
     loop_lift: float = 0.03
     background: str = "#0e1117"
@@ -49,7 +49,7 @@ class TorusRenderer:
             rstride=1,
             cstride=1,
             linewidth=cfg.surface_edge_linewidth,
-            edgecolor=(1, 1, 1, 0.12),
+            edgecolor=(1, 1, 1, 0.18),
             antialiased=True,
             alpha=cfg.face_alpha,
             color=p.color,

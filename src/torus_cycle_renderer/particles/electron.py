@@ -100,7 +100,8 @@ class Electron(FermionParticle, AbstractParticle):
     def resonant_loop(self, t: float, points: int = 900) -> tuple[np.ndarray, np.ndarray]:
         """Closed single-branch resonant cycle from one mode equation.
 
-        Constraint: nu_f*u + nu_b*v - omega*t + phase0 = const (set to 0 mod 2π).
+        Constraint: nu_f*u + nu_b*v - omega*t + phase0 = const.
+        Use continuous branch values (no modulo) to avoid visual jump artifacts.
         """
         p = self.params
         nu_f, nu_b = self.state.resonant_mode
@@ -108,14 +109,21 @@ class Electron(FermionParticle, AbstractParticle):
         t_eff = t * p.visual_time_scale * (max(p.p_value, 1e-6) / max(p.pf_value, 1e-6))
         phase0 = SPIN_PHASE_SHIFT[self.spin_state]
 
-        u = np.linspace(0.0, 2 * np.pi, points, endpoint=False)
+        u = np.linspace(0.0, 2 * np.pi, points, endpoint=True)
 
         if nu_b == 0:
             # Degenerate case: solve for constant u branch and sweep v.
-            u0 = ((omega * t_eff - phase0) / max(nu_f, 1e-6)) % (2 * np.pi)
+            u0 = (omega * t_eff - phase0) / max(nu_f, 1e-6)
             u = np.full(points, u0)
-            v = np.linspace(0.0, 2 * np.pi, points, endpoint=False)
+            v = np.linspace(0.0, 2 * np.pi, points, endpoint=True)
             return u, v
 
-        v = ((omega * t_eff - phase0 - nu_f * u) / nu_b) % (2 * np.pi)
+        v = (omega * t_eff - phase0 - nu_f * u) / nu_b
         return u, v
+
+    def cycle_time(self) -> float:
+        """Time for one complete phase advance of the single resonant mode."""
+        p = self.params
+        omega = self._effective_omega()
+        scale = p.visual_time_scale * (max(p.p_value, 1e-6) / max(p.pf_value, 1e-6))
+        return (2.0 * math.pi) / max(omega * scale, 1e-9)
