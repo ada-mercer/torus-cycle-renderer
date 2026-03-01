@@ -22,3 +22,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.scripts]
+render-frame = "torus_cycle_renderer.cli:render_frame_main"
+render-cycle = "torus_cycle_renderer.cli:render_cycle_main"
