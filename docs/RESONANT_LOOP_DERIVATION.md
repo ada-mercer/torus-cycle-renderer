@@ -117,7 +117,41 @@ The start point is fixed in time (locked at \(t=0\)); loop geometry still closes
 
 Both modes keep geometric closure by the integer winding construction.
 
-## 7) Practical electron default
+## 7) Cycle-period derivation for rendering
+Define the effective time scaling used by the particle dynamics as
+\[
+t_{eff} = s_t\, t,
+\]
+(where currently \(s_t = p/p_f\) in the electron model).
+
+Single-mode phase:
+\[
+\varphi = \nu_p u + \nu_{pf} v - \omega t_{eff} + \phi_s.
+\]
+
+### Static anchor period
+Only phase return is required:
+\[
+\omega t_{eff} = 2\pi m \Rightarrow T_{static}=\frac{2\pi}{\omega s_t}.
+\]
+
+### Evolving anchor period
+Anchor depends on time:
+\[
+v_0(t)=\frac{\omega t_{eff}-\phi_s-\nu_p u_0}{\nu_{pf}}.
+\]
+For start-point return modulo \(2\pi\), require
+\[
+\frac{\omega t_{eff}}{\nu_{pf}}=2\pi n.
+\]
+Smallest compatible positive period:
+\[
+T_{evolving}=|\nu_{pf}|\,\frac{2\pi}{\omega s_t}=|\nu_{pf}|\,T_{static}.
+\]
+
+This period law is now implemented in `Electron.cycle_time()` and consumed by the render pipeline.
+
+## 8) Practical electron default
 For a readable electron presentation with \(p_f/p\approx 3\), choose
 \[
 (k_f,k_b)=(3,1)

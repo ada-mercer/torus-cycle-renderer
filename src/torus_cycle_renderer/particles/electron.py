@@ -163,7 +163,28 @@ class Electron(FermionParticle, AbstractParticle):
         return u, v
 
     def cycle_time(self) -> float:
-        """Time for one complete resonant-cycle phase return at loop start."""
+        """Time for one visually complete cycle.
+
+        Let t_eff = t * (p/p_f). For a single mode
+            phase = mode_p*u + mode_pf*v - omega*t_eff + phase0.
+
+        Static anchor:
+            loop anchor fixed, so only field phase must return:
+            omega * t_eff = 2π * m  -> T_static = 2π/(omega*scale).
+
+        Evolving anchor:
+            v0(t) = (omega*t_eff - phase0 - mode_p*u0)/mode_pf.
+            For the start point to return modulo 2π as well,
+            omega*t_eff/mode_pf must be integer multiples of 2π.
+            Smallest positive period is
+            omega * t_eff = 2π * |mode_pf|,
+            so T_evolving = |mode_pf| * T_static.
+        """
         omega = self._effective_omega()
         scale = self._time_scale()
-        return (2.0 * math.pi) / max(omega * scale, 1e-9)
+        base = (2.0 * math.pi) / max(omega * scale, 1e-9)
+
+        if self.state.loop_anchor_mode == "evolving":
+            _mode_p, mode_pf = self.state.resonant_mode
+            return max(abs(mode_pf), 1) * base
+        return base

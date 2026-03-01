@@ -55,6 +55,10 @@ class AbstractParticle(ABC):
         )
 
     def cycle_time(self) -> float:
-        """Return time interval for one visually complete cycle."""
+        """Return time interval for one visually complete cycle.
+
+        Base behavior uses phase_speed only. Subclasses with additional
+        closure constraints (e.g., evolving anchors) should override.
+        """
         p = self.params
         return (2.0 * np.pi) / max(abs(p.phase_speed), 1e-9)
