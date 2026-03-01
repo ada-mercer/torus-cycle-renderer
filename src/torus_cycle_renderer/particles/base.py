@@ -17,6 +17,7 @@ class ParticleParams:
     loop_turn_u: int
     loop_turn_v: int
     phase_speed: float
+    visual_time_scale: float = 1.0
     resonance_coupling: float = 0.22
     resonance_detuning: float = 0.03
     color: str = "#4cc9f0"

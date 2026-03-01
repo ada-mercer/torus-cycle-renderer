@@ -173,8 +173,9 @@ class SolverBackedParticle(ParticleFamily):
         steady = self._steady
         assert steady is not None
 
+        t_eff = t * p.visual_time_scale
         sampled = self._sample_mode(u, v)
-        field_t = np.real(sampled * np.exp(-1j * steady.omega * t))
+        field_t = np.real(sampled * np.exp(-1j * steady.omega * t_eff))
         norm = np.max(np.abs(field_t)) + 1e-12
         return p.deform_amp * (field_t / norm)
 
@@ -183,15 +184,30 @@ class SolverBackedParticle(ParticleFamily):
         steady = self._steady
         assert steady is not None
 
-        phase = np.angle(steady.mode * np.exp(-1j * steady.omega * t))
+        p = self.params
+        t_eff = t * p.visual_time_scale
+        phase = np.angle(steady.mode * np.exp(-1j * steady.omega * t_eff))
         target = SPIN_PHASE_TARGET[self.spin_state]
 
         u = np.linspace(0.0, 2 * np.pi, points, endpoint=False)
         iu = np.mod((u / (2 * np.pi) * len(steady.u_axis)).astype(int), len(steady.u_axis))
 
+        nv = len(steady.v_axis)
+        penalty_weight = 0.20  # continuity regularizer to avoid jagged loop jumps
         v = np.empty_like(u)
+        prev_iv: int | None = None
+
+        idx = np.arange(nv)
         for j, iu_j in enumerate(iu):
             col = phase[:, iu_j]
-            iv = int(np.argmin(wrapped_phase_distance(col, target)))
+            base_cost = wrapped_phase_distance(col, target)
+            if prev_iv is None:
+                iv = int(np.argmin(base_cost))
+            else:
+                cyclic_dist = np.minimum(np.abs(idx - prev_iv), nv - np.abs(idx - prev_iv)) / max(nv, 1)
+                cost = base_cost + penalty_weight * cyclic_dist
+                iv = int(np.argmin(cost))
             v[j] = steady.v_axis[iv]
+            prev_iv = iv
+
         return u, v

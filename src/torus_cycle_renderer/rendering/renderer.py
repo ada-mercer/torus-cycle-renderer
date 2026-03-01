@@ -17,7 +17,7 @@ class RenderConfig:
     elev: float = 22.0
     azim: float = 36.0
     face_alpha: float = 0.42
-    surface_edge_linewidth: float = 0.05
+    surface_edge_linewidth: float = 0.0
     loop_linewidth: float = 2.2
     loop_lift: float = 0.03
     background: str = "#0e1117"
