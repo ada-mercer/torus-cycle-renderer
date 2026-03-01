@@ -20,16 +20,16 @@ class RenderConfig:
     azim: float = 36.0
 
     # Surface / wireframe
-    face_alpha: float = 0.48
-    surface_edge_linewidth: float = 0.08
-    surface_edge_alpha: float = 0.22
-    wireframe_linewidth: float = 0.25
-    wireframe_alpha: float = 0.16
-    wireframe_stride: int = 6
+    face_alpha: float = 0.44
+    surface_edge_linewidth: float = 0.10
+    surface_edge_alpha: float = 0.30
+    wireframe_linewidth: float = 0.36
+    wireframe_alpha: float = 0.28
+    wireframe_stride: int = 5
 
     # Loop
-    loop_linewidth: float = 2.4
-    loop_lift: float = 0.02
+    loop_linewidth: float = 2.6
+    loop_lift: float = 0.05
 
     # Lighting / shadow
     light_azdeg: float = 35.0
@@ -149,8 +149,14 @@ class TorusRenderer:
             deformation=ldef + cfg.loop_lift,
         )
 
-        # Segment collection gives better depth sorting than one monolithic line artist.
+        # Segment collections give better depth sorting than one monolithic line artist.
+        # Add a soft under-stroke + core stroke for readability over mesh.
+        loop_glow = self._line_collection(lx, ly, lz, p.loop_color, cfg.loop_linewidth * 1.8)
+        loop_glow.set_alpha(0.25)
+        ax.add_collection3d(loop_glow)
+
         loop_collection = self._line_collection(lx, ly, lz, p.loop_color, cfg.loop_linewidth)
+        loop_collection.set_alpha(0.98)
         ax.add_collection3d(loop_collection)
 
         extent = p.major_radius + p.minor_radius + p.deform_amp + 0.2
