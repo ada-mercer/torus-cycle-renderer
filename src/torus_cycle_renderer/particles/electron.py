@@ -133,8 +133,9 @@ class Electron(FermionParticle, AbstractParticle):
         omega = self._effective_omega()
         t_eff = t * self._time_scale()
         phase0 = SPIN_PHASE_SHIFT[self.spin_state]
+        chirality = SPIN_CHIRALITY[self.spin_state]
         mode_p, mode_pf = self.state.resonant_mode
-        phase = mode_p * u + mode_pf * v - omega * t_eff + phase0
+        phase = mode_p * u + mode_pf * v - chirality * omega * t_eff + phase0
         return p.deform_amp * np.cos(phase)
 
     def resonant_loop(self, t: float, points: int = 900) -> tuple[np.ndarray, np.ndarray]:
@@ -143,7 +144,8 @@ class Electron(FermionParticle, AbstractParticle):
         Construction:
         - Tangent transport direction: m ~ p_f e_phi + p e_theta.
         - Loop: u = u0 + 2π k_p s, v = v0 + 2π k_pf s, s in [0,1].
-        - Start phase lock at (u0,v0): mode_p*u0 + mode_pf*v0 - omega*t_eff + phase0 = 0.
+        - Start phase lock at (u0,v0): mode_p*u0 + mode_pf*v0 - χ*omega*t_eff + phase0 = 0.
+          with χ = +1 (up-like) or -1 (down-like).
 
         This guarantees geometric closure (same point at s=0 and s=1 modulo 2π).
         """
@@ -163,7 +165,7 @@ class Electron(FermionParticle, AbstractParticle):
             if self.state.loop_anchor_mode == "static":
                 v0 = (-phase0 - mode_p * u0) / mode_pf
             else:
-                v0 = (omega * t_eff - phase0 - mode_p * u0) / mode_pf
+                v0 = (chirality * omega * t_eff - phase0 - mode_p * u0) / mode_pf
         else:
             v0 = 0.0
 
