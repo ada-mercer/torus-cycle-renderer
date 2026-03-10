@@ -1,11 +1,24 @@
 from __future__ import annotations
 
-from torus_cycle_renderer.particles import Electron, Photon, AbstractParticle
+from torus_cycle_renderer.particles import Electron, Photon, WPlus, WMinus, ZBoson, UQuark, DQuark, Gluon, AbstractParticle
 
 
 PARTICLES = {
     "electron": Electron,
     "photon": Photon,
+    "wplus": WPlus,
+    "w+": WPlus,
+    "wminus": WMinus,
+    "w-": WMinus,
+    "zboson": ZBoson,
+    "z0": ZBoson,
+    "z": ZBoson,
+    "uquark": UQuark,
+    "u": UQuark,
+    "dquark": DQuark,
+    "d": DQuark,
+    "gluon": Gluon,
+    "g": Gluon,
 }
 
 

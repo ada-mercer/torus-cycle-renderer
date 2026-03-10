@@ -7,8 +7,9 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import numpy as np
 
-from torus_cycle_renderer.math import torus_surface, torus_frame
 from torus_cycle_renderer.particles import AbstractParticle
+
+from .scene_data import sample_scene_geometry
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,7 @@ class RenderConfig:
     # Loop
     loop_linewidth: float = 2.6
     loop_lift: float = 0.05
+    loop_points: int = 900
 
     # Visual styling (renderer-owned)
     torus_color: str = "#3a86ff"
@@ -89,29 +91,11 @@ class TorusRenderer:
         coll = Line3DCollection(segs, colors=color, linewidths=lw, alpha=0.98)
         return coll
 
-    def render(self, particle: AbstractParticle, time: float, output_path: str) -> None:
-        p = particle.params
-        cfg = self.config
-
-        figsize = (cfg.width / cfg.dpi, cfg.height / cfg.dpi)
-        fig = plt.figure(figsize=figsize, dpi=cfg.dpi)
-        ax = fig.add_subplot(111, projection="3d", computed_zorder=True)
-
-        fig.patch.set_facecolor(cfg.background)
-        ax.set_facecolor(cfg.background)
-
-        t_vis = time * cfg.time_scale
-
-        u, v = torus_frame()
-        deform = particle.deformation(u, v, t_vis)
-        x, y, z = torus_surface(u, v, p.major_radius, p.minor_radius, deformation=deform)
-
-        # Soft shadow on ground plane for depth cue.
-        z_floor = np.min(z) - 0.12 * (p.major_radius + p.minor_radius)
+    def _draw_surface(self, ax, scene, cfg: RenderConfig) -> None:
         ax.plot_surface(
-            x,
-            y,
-            np.full_like(z, z_floor),
+            scene.x,
+            scene.y,
+            np.full_like(scene.z, scene.z_floor),
             rstride=2,
             cstride=2,
             linewidth=0,
@@ -121,11 +105,11 @@ class TorusRenderer:
             shade=False,
         )
 
-        facecolors = self._surface_facecolors(x, y, z, cfg.torus_color)
+        facecolors = self._surface_facecolors(scene.x, scene.y, scene.z, cfg.torus_color)
         ax.plot_surface(
-            x,
-            y,
-            z,
+            scene.x,
+            scene.y,
+            scene.z,
             rstride=1,
             cstride=1,
             linewidth=cfg.surface_edge_linewidth,
@@ -135,46 +119,80 @@ class TorusRenderer:
             shade=False,
         )
 
-        # Secondary wireframe layer for shape readability.
         ax.plot_wireframe(
-            x,
-            y,
-            z,
+            scene.x,
+            scene.y,
+            scene.z,
             rstride=cfg.wireframe_stride,
             cstride=cfg.wireframe_stride,
             color=(1, 1, 1, cfg.wireframe_alpha),
             linewidth=cfg.wireframe_linewidth,
         )
 
-        lu, lv = particle.resonant_loop(t_vis)
-        ldef = particle.deformation(lu, lv, t_vis)
-        lx, ly, lz = torus_surface(
-            lu,
-            lv,
-            p.major_radius,
-            p.minor_radius,
-            deformation=ldef + cfg.loop_lift,
-        )
-
-        # Segment collections give better depth sorting than one monolithic line artist.
-        # Add a soft under-stroke + core stroke for readability over mesh.
-        loop_glow = self._line_collection(lx, ly, lz, cfg.loop_color, cfg.loop_linewidth * 1.8)
+    def _draw_loop(self, ax, scene, cfg: RenderConfig) -> None:
+        loop_glow = self._line_collection(scene.lx, scene.ly, scene.lz, cfg.loop_color, cfg.loop_linewidth * 1.8)
         loop_glow.set_alpha(0.25)
         ax.add_collection3d(loop_glow)
 
-        loop_collection = self._line_collection(lx, ly, lz, cfg.loop_color, cfg.loop_linewidth)
+        loop_collection = self._line_collection(scene.lx, scene.ly, scene.lz, cfg.loop_color, cfg.loop_linewidth)
         loop_collection.set_alpha(0.98)
         ax.add_collection3d(loop_collection)
 
-        extent = p.major_radius + p.minor_radius + p.deform_amp + 0.2
+    def _draw_overlay(self, ax, scene) -> None:
+        ax.set_title(f"{scene.particle_name}: deformed torus + resonant loop", color="white", pad=14)
+        ax.text2D(
+            0.02,
+            0.915,
+            scene.particle_subtitle,
+            transform=ax.transAxes,
+            color="#c9d1d9",
+            fontsize=9,
+            va="top",
+            ha="left",
+        )
+
+        legend_text = f"channels: p={scene.p_value:.3f}, p_f={scene.pf_value:.3f}, p/p_f={scene.ratio_label}"
+        ax.text2D(
+            0.02,
+            0.96,
+            legend_text,
+            transform=ax.transAxes,
+            color="white",
+            fontsize=9,
+            va="top",
+            ha="left",
+            bbox=dict(boxstyle="round,pad=0.35", facecolor=(0, 0, 0, 0.45), edgecolor=(1, 1, 1, 0.20)),
+        )
+
+    def render(self, particle: AbstractParticle, time: float, output_path: str) -> None:
+        cfg = self.config
+        scene = sample_scene_geometry(
+            particle,
+            time,
+            time_scale=cfg.time_scale,
+            loop_points=cfg.loop_points,
+            loop_lift_override=cfg.loop_lift,
+        )
+
+        figsize = (cfg.width / cfg.dpi, cfg.height / cfg.dpi)
+        fig = plt.figure(figsize=figsize, dpi=cfg.dpi)
+        ax = fig.add_subplot(111, projection="3d", computed_zorder=True)
+
+        fig.patch.set_facecolor(cfg.background)
+        ax.set_facecolor(cfg.background)
+
+        self._draw_surface(ax, scene, cfg)
+        self._draw_loop(ax, scene, cfg)
+
+        extent = scene.major_radius + scene.minor_radius + scene.deform_amp + 0.2
         ax.set_xlim(-extent, extent)
         ax.set_ylim(-extent, extent)
-        ax.set_zlim(z_floor, extent * 0.75)
+        ax.set_zlim(scene.z_floor, extent * 0.75)
         ax.set_box_aspect((1, 1, 0.6))
 
         ax.view_init(elev=cfg.elev, azim=cfg.azim)
         ax.set_axis_off()
-        ax.set_title(f"{particle.name}: deformed torus + resonant loop", color="white", pad=14)
+        self._draw_overlay(ax, scene)
 
         plt.tight_layout(pad=0)
         fig.savefig(output_path, bbox_inches="tight", pad_inches=0)

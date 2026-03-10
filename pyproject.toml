@@ -17,6 +17,11 @@ dependencies = [
   "kaleido>=0.2.1",
 ]
 
+[project.optional-dependencies]
+pyvista = [
+  "pyvista>=0.44",
+]
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

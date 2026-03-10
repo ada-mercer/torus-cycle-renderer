@@ -1,6 +1,6 @@
 # Rendering Backends
 
-The project intentionally supports two parallel render paths.
+The project intentionally supports three parallel render paths.
 
 ---
 
@@ -39,7 +39,25 @@ If missing, install Chrome + required system libs.
 
 ---
 
-## 3) Shared controls (both backends)
+## 3) PyVista backend
+
+Command switch:
+```bash
+--backend pyvista
+```
+
+### Strengths
+- VTK-based offscreen rendering with stronger mesh/curve presentation than matplotlib
+- uses the same shared scene geometry path as the other backends
+- exports static image frames cleanly for GIF/MP4 stitching through the existing CLI cycle path
+
+### Limitations
+- requires the optional `pyvista` dependency
+- currently targets static image outputs directly; GIF/MP4 are built by stitching rendered PNG frames
+
+---
+
+## 4) Shared controls (all backends)
 
 Both use:
 - `--torus-color`
@@ -51,7 +69,7 @@ So style can be matched across pipelines.
 
 ---
 
-## 4) Geometry export bridge
+## 5) Geometry export bridge
 
 `render-frame --export-geometry` writes:
 - `*_geom.npz`
@@ -62,7 +80,7 @@ Use this when you want to render identical state geometry in an external engine 
 
 ---
 
-## 5) Recommended workflow
+## 6) Recommended workflow
 
 1. Iterate quickly with Matplotlib GIF.
 2. Validate depth-sensitive views in Plotly.

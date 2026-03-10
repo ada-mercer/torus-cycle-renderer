@@ -2,6 +2,10 @@
 
 This file derives the loop model implemented in `particles/electron.py`.
 
+Scope note:
+- this derivation explains the **closed resonant loop ansatz used for rendering**;
+- it should not be overread as proof that every particle sector in the wider theory must admit this exact kind of perfectly closed loop.
+
 ---
 
 ## 1) Torus and tangent basis
@@ -124,7 +128,18 @@ This is exactly what `Electron.cycle_time()` returns.
 
 ## 7) Spin interpretation used here
 
-Spin inversion flips **bosic chirality only** (\(\chi_p\)).
-Fermic orientation remains fixed for matter branch.
+Two spin hooks are active in code:
 
-So up/down loops differ by major-direction handedness, not by fermic inversion.
+1. bosic chirality \(\chi_p\in\{+1,-1\}\) in loop transport,
+2. phase offset \(\phi_s\) in deformation phase.
+
+Current mapping:
+
+| spin state | \(\chi_p\) | \(\phi_s\) |
+|---|---:|---:|
+| `++` | +1 | \(0\) |
+| `+-` | +1 | \(+\pi/2\) |
+| `-+` | -1 | \(-\pi/2\) |
+| `--` | -1 | \(\pi\) |
+
+So up/down branches differ by major-direction handedness, while fermic orientation remains fixed for the matter branch.

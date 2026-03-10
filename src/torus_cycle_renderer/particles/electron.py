@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from fractions import Fraction
 import math
 import numpy as np
 
 from .base import AbstractParticle, ParticleParams
 from .families import FermionParticle, SpinState
+from torus_cycle_renderer.math import tangent_winding_from_channels
+from torus_cycle_renderer.loops import LoopGeometry, ParticleLoop
 
 
 @dataclass(frozen=True)
@@ -22,8 +23,10 @@ class ElectronState:
     # - "evolving": start point follows phase lock over time.
     # - "static": start point fixed from t=0 lock, shape still rotates through field.
     loop_anchor_mode: str = "evolving"
+    # If true, move the loop reference along the fermic/minor coordinate over the cycle.
+    pf_orbit_relative: bool = True
     pf_value: float = 1.0
-    p_value: float = 1.0 / 3.0
+    p_value: float = 0.50
     phase_speed: float = 1.2
     major_radius: float = 2.1
     minor_radius: float = 0.72
@@ -71,6 +74,7 @@ class Electron(FermionParticle, AbstractParticle):
             resonant_mode=base.resonant_mode,
             transport_winding=base.transport_winding,
             loop_anchor_mode=loop_anchor_mode,
+            pf_orbit_relative=bool(base.pf_orbit_relative),
             pf_value=base.pf_value,
             p_value=base.p_value,
             phase_speed=base.phase_speed,
@@ -105,6 +109,7 @@ class Electron(FermionParticle, AbstractParticle):
             phase_speed=self.state.phase_speed,
             pf_value=self.state.pf_value,
             p_value=self.state.p_value,
+            fermic_cycles=2,
         )
 
     def _effective_omega(self) -> float:
@@ -119,15 +124,20 @@ class Electron(FermionParticle, AbstractParticle):
         return max(p.p_value, 1e-9) / max(p.pf_value, 1e-9)
 
     def _transport_winding(self) -> tuple[int, int]:
-        """Return (k_pf, k_p) from p_f/p ratio for closed transport winding."""
+        """Return (k_pf, k_p) with short-loop preference under tangent constraint."""
         if self.state.transport_winding is not None:
             return self.state.transport_winding
 
-        ratio = max(self.state.pf_value, 1e-9) / max(self.state.p_value, 1e-9)
-        frac = Fraction(ratio).limit_denominator(8)
-        k_f = max(1, int(frac.numerator))
-        k_b = max(1, int(frac.denominator))
-        return (k_f, k_b)
+        # Helper returns (k_u, k_v) with u~p and v~p_f.
+        k_u, k_v = tangent_winding_from_channels(
+            self.state.p_value,
+            self.state.pf_value,
+            major_radius=self.state.major_radius,
+            minor_radius=self.state.minor_radius,
+            min_k_v=max(1, int(self.params.fermic_cycles)),
+        )
+        # Electron convention in this file expects (k_pf, k_p).
+        return (k_v, k_u)
 
     def deformation(self, u: np.ndarray, v: np.ndarray, t: float) -> np.ndarray:
         p = self.params
@@ -139,58 +149,52 @@ class Electron(FermionParticle, AbstractParticle):
         return p.deform_amp * np.cos(phase)
 
     def resonant_loop(self, t: float, points: int = 900) -> tuple[np.ndarray, np.ndarray]:
-        """Closed resonant transport loop in torus coordinates.
+        loop = self.loop_geometry(t=t, points=points)
+        return loop.u, loop.v
 
-        Construction:
-        - Tangent transport direction: m ~ p_f e_phi + p e_theta.
-        - Loop: u = u0 + 2π k_p s, v = v0 + 2π k_pf s, s in [0,1].
-        - Start phase lock at (u0,v0): mode_p*u0 + mode_pf*v0 - χ*omega*t_eff + phase0 = 0.
-          with χ = +1 (up-like) or -1 (down-like).
-
-        This guarantees geometric closure (same point at s=0 and s=1 modulo 2π).
-        """
+    def loop_geometry(
+        self,
+        t: float,
+        points: int = 900,
+        reference_uv: tuple[float, float] = (0.0, 0.0),
+    ) -> LoopGeometry:
+        """Closed resonant transport loop with optional p_f-relative reference motion."""
         mode_p, mode_pf = self.state.resonant_mode
         omega = self._effective_omega()
         t_eff = t * self._time_scale()
         phase0 = SPIN_PHASE_SHIFT[self.spin_state]
 
-        # _transport_winding returns (k_pf, k_p); swap into coordinate axes:
-        # u/theta uses p winding, v/phi uses p_f winding.
+        # _transport_winding returns (k_pf, k_p); swap into coordinate axes.
         k_pf, k_p = self._transport_winding()
         bosic_chirality = SPIN_BOSIC_CHIRALITY[self.spin_state]
-        s = np.linspace(0.0, 1.0, points, endpoint=True)
 
-        u0 = 0.0
+        u0 = float(reference_uv[0])
         if mode_pf != 0:
             if self.state.loop_anchor_mode == "static":
-                v0 = (-phase0 - mode_p * u0) / mode_pf
+                v_anchor = (-phase0 - mode_p * u0) / mode_pf
             else:
-                v0 = (omega * t_eff - phase0 - mode_p * u0) / mode_pf
+                v_anchor = (omega * t_eff - phase0 - mode_p * u0) / mode_pf
         else:
-            v0 = 0.0
+            v_anchor = 0.0
 
-        u = u0 + 2.0 * np.pi * bosic_chirality * k_p * s
-        v = v0 + 2.0 * np.pi * k_pf * s
-        return u, v
+        move_with_pf = bool(self.state.pf_orbit_relative and self.state.loop_anchor_mode == "evolving")
+
+        return ParticleLoop(self, reference_uv=reference_uv).transport_winding(
+            t=t,
+            points=points,
+            k_u=k_p,
+            k_v=k_pf,
+            v_anchor=v_anchor,
+            u_sign=bosic_chirality,
+            v_sign=+1,
+            pf_orbit_relative=move_with_pf,
+            pf_orbit_sign=+1,
+            pf_orbit_scale=1.0,
+            pf_orbit_period=self.loop_cycle_time(),
+        )
 
     def cycle_time(self) -> float:
-        """Time for one visually complete cycle.
-
-        Let t_eff = t * (p/p_f). For a single mode
-            phase = mode_p*u + mode_pf*v - omega*t_eff + phase0.
-
-        Static anchor:
-            loop anchor fixed, so only field phase must return:
-            omega * t_eff = 2π * m  -> T_static = 2π/(omega*scale).
-
-        Evolving anchor:
-            v0(t) = (omega*t_eff - phase0 - mode_p*u0)/mode_pf.
-            For the start point to return modulo 2π as well,
-            omega*t_eff/mode_pf must be integer multiples of 2π.
-            Smallest positive period is
-            omega * t_eff = 2π * |mode_pf|,
-            so T_evolving = |mode_pf| * T_static.
-        """
+        """Time for full return of electron loop and phase anchor."""
         omega = self._effective_omega()
         scale = self._time_scale()
         base = (2.0 * math.pi) / max(omega * scale, 1e-9)
@@ -199,3 +203,6 @@ class Electron(FermionParticle, AbstractParticle):
             _mode_p, mode_pf = self.state.resonant_mode
             return max(abs(mode_pf), 1) * base
         return base
+
+    def loop_cycle_time(self) -> float:
+        return self.cycle_time()

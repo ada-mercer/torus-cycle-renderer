@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from torus_cycle_renderer.math import coupled_phase_trajectory
+from torus_cycle_renderer.loops import LoopGeometry, ParticleLoop
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,10 @@ class ParticleParams:
     p_value: float = 0.33
     resonance_coupling: float = 0.22
     resonance_detuning: float = 0.03
+    # Optional per-particle loop visibility tuning.
+    loop_lift: float = 0.05
+    # Preferred minimum number of fermic turns (v-cycle) for closed loops.
+    fermic_cycles: int = 1
 
 
 class AbstractParticle(ABC):
@@ -54,11 +59,23 @@ class AbstractParticle(ABC):
             detuning=p.resonance_detuning * p.phase_speed,
         )
 
-    def cycle_time(self) -> float:
-        """Return time interval for one visually complete cycle.
+    def loop_geometry(
+        self,
+        t: float,
+        points: int = 900,
+        reference_uv: tuple[float, float] = (0.0, 0.0),
+    ) -> LoopGeometry:
+        """Return loop geometry via a dedicated loop model object."""
+        return ParticleLoop(self, reference_uv=reference_uv).from_particle_default(t=t, points=points)
 
-        Base behavior uses phase_speed only. Subclasses with additional
-        closure constraints (e.g., evolving anchors) should override.
-        """
+    def cycle_time(self) -> float:
+        """Base cycle from phase-speed scale only."""
         p = self.params
         return (2.0 * np.pi) / max(abs(p.phase_speed), 1e-9)
+
+    def loop_cycle_time(self) -> float:
+        """Time interval for full return to original loop state.
+
+        Subclasses with extra closure constraints should override.
+        """
+        return self.cycle_time()
