@@ -54,6 +54,12 @@ A single-mode state (`ElectronState`) with:
 
 Current nuance: in `Electron`, rendered dynamics are primarily driven by resonant mode + transport winding; the explicit \((n_f,n_b)\)-shifted operator path is available in the solver-backed branch (`math/steady_state.py`).
 
+Interpretation boundary:
+- the current renderer electron path is best read as a **matter-branch observable slice**,
+- bosic chirality is the best current interpretation of the observable spin projection in this repo,
+- deeper fermic-branch / lifted-sign structure from the broader theory is not yet represented here as a full first-class renderer sign model.
+- see `docs/SIGN_ARCHITECTURE_AND_INTERPRETATION.md`.
+
 Important split:
 - `math/steady_state.py` realizes the full linear steady-state shifted-operator problem directly;
 - most particle classes in `particles/` are compact branch ansätze built on that same torus-wave backbone rather than direct runtime PDE evolvers.

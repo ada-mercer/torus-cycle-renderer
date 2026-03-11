@@ -57,4 +57,11 @@ Interpretation:
 
 `ZBoson` should be read as a neutral weak-channel probe branch built on the common torus-wave backbone, using a compact mixed neutral ansatz to avoid an unrealistically trivial single-wave appearance while staying inside the renderer's reduced-mode policy.
 
+Sign/chirality reading:
+- neutrality belongs to branch identity through the neutral mixing sector,
+- any helicity/handedness tag remains separate from charged/neutral branch identity,
+- weak coupling chirality should not be collapsed into the neutral branch label itself.
+
+This keeps `Z` aligned with the layered weak-sector interpretation summarized in `book/dev/INTERNAL_GEOMETRY_WEAK_SECTOR_SIGN_CHIRALITY_SYNTHESIS_V1.md`.
+
 In EM-projector language, it is the natural neutral weak test branch: vanishing monopole content at leading order should coexist with nontrivial higher-moment / transport structure, making it a useful branch for checking the distinction between charged and neutral projector output.

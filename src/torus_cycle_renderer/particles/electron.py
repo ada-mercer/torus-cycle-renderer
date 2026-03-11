@@ -16,7 +16,7 @@ class ElectronState:
 
     spin_state: SpinState = SpinState.PP
     winding: tuple[int, int] = (1, 1)
-    resonant_mode: tuple[int, int] = (1, 3)  # (nu_f, nu_b) single mode (no superposition)
+    resonant_mode: tuple[int, int] = (1, 3)  # (mode_p, mode_pf) single mode (no superposition)
     # Optional explicit transport winding (k_f, k_b). If None, inferred from pf/p ratio.
     transport_winding: tuple[int, int] | None = None
     # Loop anchor mode:
@@ -40,8 +40,11 @@ SPIN_PHASE_SHIFT = {
     SpinState.MM: math.pi,
 }
 
-# Spin convention: spin flip reverses bosic transport handedness (p-sector),
-# while fermic orientation (p_f-sector) remains fixed for matter branch.
+# Renderer-level spin convention:
+# - spin flip reverses bosic transport handedness (observable matter-branch spin slot),
+# - fermic orientation (p_f-sector) remains fixed in this matter-branch slice,
+# - deeper particle/antiparticle or lifted-sign structure from the broader theory is
+#   not represented here as a first-class sign variable.
 SPIN_BOSIC_CHIRALITY = {
     SpinState.PP: +1,
     SpinState.PM: +1,
@@ -96,7 +99,7 @@ class Electron(FermionParticle, AbstractParticle):
 
     @property
     def params(self) -> ParticleParams:
-        # resonant_mode stores (mode_p, mode_pf) to reflect p on theta(u), p_f on phi(v)
+        # resonant_mode stores (mode_p, mode_pf): bosic/major first, fermic/minor second.
         mode_p, mode_pf = self.state.resonant_mode
         return ParticleParams(
             major_radius=self.state.major_radius,

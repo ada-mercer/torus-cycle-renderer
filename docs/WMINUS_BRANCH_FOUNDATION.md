@@ -55,4 +55,11 @@ Interpretation:
 
 `WMinus` should be read as the charged-conjugate weak-channel probe branch paired to `WPlus`, built on the same torus-wave backbone and kept intentionally compact at the renderer level.
 
+Sign/chirality reading:
+- branch identity (`WMinus`) carries the charged-conjugate sign role,
+- helicity/loop handedness remains a separate explicit slot,
+- weak left/right bias belongs to the coupling structure, not to the branch-sign label itself.
+
+This keeps `W-` aligned with the layered weak-sector interpretation summarized in `book/dev/INTERNAL_GEOMETRY_WEAK_SECTOR_SIGN_CHIRALITY_SYNTHESIS_V1.md`.
+
 In EM-projector language, it plays the same reduced role as `WPlus` but with opposite charged-branch orientation, making it the natural charged-conjugate test branch for sign inheritance, current-channel reversal, and charged transition comparison.

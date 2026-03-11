@@ -77,6 +77,11 @@ Closure (modulo \(2\pi\)):
 
 ## 3) How spin enters
 
+Note on interpretation boundary:
+- in the current renderer, spin is represented operationally through bosic chirality `chi_p` plus a phase-sector offset;
+- in the deeper internal-geometry notes (`book/dev/INTERNAL_GEOMETRY_MAGNETIC_MOMENT_SIGN_CHECK_V1.md`), this bosic chirality is currently the best candidate for the **observable spin projection**, while fermic branch orientation is reserved for the particle/antiparticle sign slot.
+- the more symmetric fermic-bosic oriented-pair sign is presently best treated as a deeper lifted-state label rather than the directly measured spin sign.
+
 Spin affects two independent structures:
 
 1. **Transport chirality (geometric handedness)**

@@ -10,7 +10,8 @@ The project is designed so that **physics/state logic** is separate from **visua
 Important repository stance:
 - this repo is a **visualization / structure-testing lab**, not a full particle-state solver;
 - current renders intentionally prioritize **pure resonant modes** to build intuition about internal dynamics before adding mixed, leaky, or only-partially-resonant states;
-- weak-boson and quark branches should be read as **resonant probes / correspondence branches**, not as claims that those sectors are already represented here as fully closed physical states.
+- weak-boson and quark branches should be read as **resonant probes / correspondence branches**, not as claims that those sectors are already represented here as fully closed physical states;
+- the repo most faithfully represents **observable/probe-level handedness and branch behavior**, not yet the full deeper sign ontology of the broader internal-geometry program.
 
 ---
 
@@ -200,6 +201,7 @@ render-frame --backend matplotlib --particle electron --export-geometry --output
 - `docs/QUARK_DERIVATION_CHAIN_INDEX.md` — compact guide to the quark derivation chain, current conclusions, and open gaps
 - `docs/ELECTRON_STEADY_STATE_EXAMPLE.md` — concrete electron walkthrough (state, equations, spin)
 - `docs/ELECTRON_STRUCTURE.md` — electron DOF card + spin entry + EM-emergence hypotheses
+- `docs/SIGN_ARCHITECTURE_AND_INTERPRETATION.md` — current repo-level sign/chirality interpretation boundary (branch identity vs observable handedness vs deeper internal sign)
 - `docs/RESONANT_LOOP_DERIVATION.md` — loop derivation and period law
 - `docs/RENDERING_BACKENDS.md` — backend behavior and practical workflow
 - `docs/CODE_GUIDE.md` — code map, interfaces, extension points

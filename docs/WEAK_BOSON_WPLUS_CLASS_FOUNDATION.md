@@ -61,9 +61,13 @@ v(s)=2\pi h k_v s + \alpha_v t,
 State object should provide:
 - `helicity` (`±1`)
 - `resonant_mode` (`mode_u`, `mode_v`)
-- `transport_winding` (`k_u`, `k_v`)
+- `transport_winding` (`k_u`, `k_v`) as an explicit state-level winding descriptor / policy hint
 - `mass_gap` (`Omega_W` proxy)
 - geometry/deformation controls
+
+Current implementation note:
+- the operative loop construction is driven by `phase_locked(...)` from mode coefficients and channel values;
+- `transport_winding` should therefore be read as a state-level branch descriptor unless/until it is promoted to the primary loop driver in code.
 
 Class behavior must implement:
 - `params` (ParticleParams)
@@ -72,6 +76,12 @@ Class behavior must implement:
 - `cycle_time()`
 
 ## 4) Policy alignment
+
+Interpretation boundary (sign/chirality discipline):
+- class identity `WPlus` / `WMinus` carries **charged branch identity**,
+- `helicity` carries **observable handedness / loop-orientation sign**,
+- left-biased weak coupling remains a **coupling-selection rule**, not a hidden synonym for branch sign or helicity.
+- see `book/dev/INTERNAL_GEOMETRY_WEAK_SECTOR_SIGN_CHIRALITY_SYNTHESIS_V1.md` for the consolidated weak-sector reading.
 
 - Class should inherit from `WeakBosonParticle`.
 - `resonance_coupling` must remain in `[0,1]` (family policy).

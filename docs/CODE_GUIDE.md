@@ -5,6 +5,8 @@ This guide maps theory concepts to code locations.
 Interpretation guardrail:
 - the codebase currently prioritizes **clear resonant-mode representatives** over full physical-state closure;
 - when extending classes, preserve the distinction between a renderable probe mode and a claimed full particle solution.
+- also preserve the distinction between **branch identity**, **observable handedness/spin/helicity**, and any **deeper internal lifted-state sign** that the broader theory may discuss but the repo does not yet fully encode.
+- see `docs/SIGN_ARCHITECTURE_AND_INTERPRETATION.md`.
 
 ---
 
