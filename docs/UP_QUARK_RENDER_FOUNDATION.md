@@ -24,7 +24,9 @@ Interpretive layer:
 - current best effective-charge reading is not raw `delta_u`, but the closure-complement projection weight `(1 - delta_u) = 2/3`, with sign carried separately by orientation branch,
 - the more refined projector-side reading is via an integrated local coherence fraction `C[Xi]` on the torus surface, with coarse-grained approximation `C[Xi] ≈ 1 - delta_u`,
 - color phase is currently interpreted as a modifier of coherence weighting / projected support shape, not as the primary source of EM sign,
-- for the full derivation chain and open gaps, start with `docs/QUARK_DERIVATION_CHAIN_INDEX.md`.
+- current spin-state handling should be read as an observable/probe-level handedness choice, not a complete quark-spin ontology,
+- closure defect, EM sign branch, color/coherence modifier, and observable handedness should be kept conceptually separate;
+- for the full derivation chain and open gaps, start with `docs/QUARK_DERIVATION_CHAIN_INDEX.md` and `docs/QUARK_GLUON_SIGN_AND_CLOSURE_INTERPRETATION.md`.
 - the current closure story is no longer just isolated defect bookkeeping; see `docs/COUPLED_QUARK_GLUON_WEAK_CLOSURE_ALGEBRA.md` for the coupled-state extension and `docs/GLUON_COMPENSATION_TERM_ANSATZ.md` for the first explicit gluon/color compensation term.
 
 ## 3) Prototype class

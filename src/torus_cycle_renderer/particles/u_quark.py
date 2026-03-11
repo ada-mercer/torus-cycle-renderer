@@ -19,6 +19,7 @@ class UQuarkState:
 
     spin_state: SpinState = SpinState.PP
     # Color-phase branch (0, 2π/3, 4π/3 in simple cycle model).
+    # Renderer interpretation: this is a color/coherence modifier, not a standalone EM-sign label.
     color_phase: float = 0.0
     resonant_mode: tuple[int, int] = (1, 3)
     secondary_mode: tuple[int, int] = (2, 2)
@@ -42,7 +43,9 @@ class UQuark(Quark):
 
     Foundation assumptions:
     - quark branch carries a fractional closure-defect phase,
-    - weak-channel cycles can compensate defect in low-order resonances.
+    - weak-channel cycles can compensate defect in low-order resonances,
+    - current spin-state handling remains an observable/probe-level handedness choice,
+      not a full quark sign ontology.
     """
 
     def __init__(self, state: UQuarkState | None = None):

@@ -34,7 +34,9 @@ Interpretive layer:
 - current best effective-charge reading is the closure-complement projection weight `(1 - delta_d) = 1/3`, with sign carried separately by orientation branch rather than by defect class itself,
 - the more refined projector-side reading uses an integrated local coherence fraction `C[Xi]` on the torus surface, with coarse-grained approximation `C[Xi] ≈ 1 - delta_d`,
 - color-phase dependence should be interpreted first as changing coherence weighting or support geometry, not as replacing closure-defect or orientation roles,
-- for the full derivation chain and open gaps, start with `docs/QUARK_DERIVATION_CHAIN_INDEX.md`.
+- current spin-state handling should be read as an observable/probe-level handedness choice, not a complete quark-spin ontology,
+- closure defect, EM sign branch, color/coherence modifier, and observable handedness should be kept conceptually separate,
+- for the full derivation chain and open gaps, start with `docs/QUARK_DERIVATION_CHAIN_INDEX.md` and `docs/QUARK_GLUON_SIGN_AND_CLOSURE_INTERPRETATION.md`.
 - the current closure story is now extended to the coupled-state level; see `docs/COUPLED_QUARK_GLUON_WEAK_CLOSURE_ALGEBRA.md` and `docs/GLUON_COMPENSATION_TERM_ANSATZ.md`.
 
 ## 3) Gluon prototype
@@ -51,8 +53,10 @@ Tool:
 Interpretive layer:
 - the gluon branch is best read as an exploratory color-transport / coherence-mediating prototype,
 - not yet as a closure-charge locked branch at the same derivational maturity as the up/down quark prototypes,
+- `helicity` is an observable handedness / loop-orientation slot, not an EM-sign label,
 - current value is mainly structural: visualizing dual-mode transport, color-phase organization, and possible coherence-reshaping behavior,
-- but it now also has an explicit mathematical role in the coupled closure program: `docs/GLUON_COMPENSATION_TERM_ANSATZ.md` treats gluon/color interaction as a first reduced compensation term rather than leaving it purely symbolic.
+- but it now also has an explicit mathematical role in the coupled closure program: `docs/GLUON_COMPENSATION_TERM_ANSATZ.md` treats gluon/color interaction as a first reduced compensation term rather than leaving it purely symbolic,
+- see `docs/QUARK_GLUON_SIGN_AND_CLOSURE_INTERPRETATION.md` for the current scope boundary.
 
 ## 4) Quick run commands
 

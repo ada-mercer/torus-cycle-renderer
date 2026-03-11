@@ -208,6 +208,7 @@ render-frame --backend matplotlib --particle electron --export-geometry --output
 - `docs/WEAK_BOSON_WPLUS_CLASS_FOUNDATION.md` — derivation-to-class contract for first weak-boson renderer path
 - `docs/UP_QUARK_RENDER_FOUNDATION.md` — up-quark prototype foundation + promotion criteria
 - `docs/DOWN_GLUON_RENDER_FOUNDATION.md` — down-quark + gluon prototype foundation + promotion criteria
+- `docs/QUARK_GLUON_SIGN_AND_CLOSURE_INTERPRETATION.md` — current repo-level interpretation boundary for closure defect, EM sign branch, color/coherence modifiers, and observable handedness in prototype quark/gluon branches
 - `scripts/render_weak_pair.py` — side-by-side W+ / W- cycle renderer
 - `scripts/analyze_up_quark_resonance.py` — scan low-order weak-assisted lock candidates for up-quark prototype
 - `scripts/analyze_down_quark_resonance.py` — scan low-order weak-assisted lock candidates for down-quark prototype

@@ -119,6 +119,8 @@ Installed by `pyproject.toml`:
 - `docs/CONSTRAINED_TORUS_TO_EM_PROJECTOR_ANSATZ.md`, `docs/EM_FAR_FIELD_AND_MULTIPOLE_CONSEQUENCES.md`, and `docs/EM_PROJECTOR_STATUS_MAP.md` now document the EM emergence side at the same exact/constrained/open split.
 - `docs/ELECTRON_STEADY_STATE_EXAMPLE.md` is the equation-to-code map for `Electron`.
 - `docs/ELECTRON_STRUCTURE.md` is the compact DOF/spin/field-emergence theory card.
+- `docs/SIGN_ARCHITECTURE_AND_INTERPRETATION.md` records the repo-level sign/chirality boundary for electron/photon/weak branches.
+- `docs/QUARK_GLUON_SIGN_AND_CLOSURE_INTERPRETATION.md` records the corresponding boundary for quark/gluon prototypes.
 - `../docs/theory/LOOP_TANGENCY_AND_CLOSURE_DERIVATION.md` defines the shared loop constraint math.
 
 When behavior in `particles/electron.py` or `math/steady_state.py` changes, update those derivation-facing docs in the same PR.

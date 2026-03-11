@@ -15,6 +15,7 @@ class GluonState:
 
     Represents a color-adjoint-like transport branch with zero net EM charge
     expectation in the unified projector picture.
+    Helicity here is an observable handedness slot, not an EM-sign label.
     """
 
     helicity: int = +1

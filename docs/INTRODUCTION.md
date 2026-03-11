@@ -129,7 +129,9 @@ Interpretation note:
 - quark renders should be read as **defect-bearing resonant probe branches** or **resonant skeletons** for non-asymptotic sectors suspected not to admit a simple fully resonant isolated state;
 - they are best interpreted as isolated representatives of incomplete-closure sectors, not as free asymptotic particle states;
 - current visual closure choices are intentionally kept low-order and readable, not presented as proof that the physical quark sector is exactly that closed mode;
-- the current theory direction now extends beyond isolated defect bookkeeping toward **coupled closure**, where other quarks plus gluon/color-mediated and possibly weak-assisted compensation may be required for full cycle completion.
+- the current theory direction now extends beyond isolated defect bookkeeping toward **coupled closure**, where other quarks plus gluon/color-mediated and possibly weak-assisted compensation may be required for full cycle completion;
+- closure defect, EM sign branch, color/coherence modifiers, and observable handedness should be kept conceptually separate unless a stronger derivation explicitly identifies them.
+- see `docs/QUARK_GLUON_SIGN_AND_CLOSURE_INTERPRETATION.md`.
 
 See `docs/UP_QUARK_RENDER_FOUNDATION.md`, `docs/DOWN_GLUON_RENDER_FOUNDATION.md`, `docs/COUPLED_QUARK_GLUON_WEAK_CLOSURE_ALGEBRA.md`, and `docs/GLUON_COMPENSATION_TERM_ANSATZ.md`.
 

@@ -35,7 +35,9 @@ class DQuark(Quark):
 
     Foundation assumptions:
     - down branch carries fractional closure-defect phase,
-    - weak-channel cycles compensate defect in low-order resonance locks.
+    - weak-channel cycles compensate defect in low-order resonance locks,
+    - current spin-state handling remains an observable/probe-level handedness choice,
+      not a full quark sign ontology.
     """
 
     def __init__(self, state: DQuarkState | None = None):

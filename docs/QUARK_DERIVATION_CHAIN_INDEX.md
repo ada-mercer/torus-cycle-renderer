@@ -140,8 +140,10 @@ Use separate labels:
 - \(\delta\): closure-defect class
 - \(\chi\): EM sign branch
 - \(c\): weak chirality participation
+- observable handedness/spin-helicity-like projection: separate renderer/probe-level slot
 
 Do **not** collapse these into one variable.
+See also `docs/QUARK_GLUON_SIGN_AND_CLOSURE_INTERPRETATION.md` for the renderer-level interpretation boundary.
 
 ### F. Coupled closure extension
 The isolated scalar defect law is now extended by the coupled-state working rule
