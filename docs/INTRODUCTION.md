@@ -133,7 +133,7 @@ Interpretation note:
 - closure defect, EM sign branch, color/coherence modifiers, and observable handedness should be kept conceptually separate unless a stronger derivation explicitly identifies them.
 - see `docs/QUARK_GLUON_SIGN_AND_CLOSURE_INTERPRETATION.md`.
 
-See `docs/UP_QUARK_RENDER_FOUNDATION.md`, `docs/DOWN_GLUON_RENDER_FOUNDATION.md`, `docs/COUPLED_QUARK_GLUON_WEAK_CLOSURE_ALGEBRA.md`, and `docs/GLUON_COMPENSATION_TERM_ANSATZ.md`.
+See `docs/UP_QUARK_RENDER_FOUNDATION.md`, `docs/DOWN_GLUON_RENDER_FOUNDATION.md`, `docs/UUD_TRIANGLE_SCENE_FOUNDATION.md`, `docs/COUPLED_QUARK_GLUON_WEAK_CLOSURE_ALGEBRA.md`, and `docs/GLUON_COMPENSATION_TERM_ANSATZ.md`.
 
 ### Gluon prototype branch (exploratory)
 `Gluon` is implemented as an exploratory color-transport / coherence-mediating prototype branch.
